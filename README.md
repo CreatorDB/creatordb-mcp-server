@@ -29,7 +29,7 @@ Every tool returns the underlying V3 JSON plus a `Credits used: N | Remaining: M
 
 The server reads one environment variable: `CREATORDB_API_KEY` (your V3 key).
 
-### Method A — `npx` from npm (recommended once published)
+### Method A — `npx` from npm (recommended)
 
 The package is published to npm as **`@creatordbai/mcp-server`**. No local clone, no SSH key, no GitHub access required:
 
