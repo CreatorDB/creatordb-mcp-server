@@ -46,8 +46,6 @@ jobs:
         #   1. The workflow has `permissions: id-token: write` (above)
         #   2. The package is configured with a Trusted Publisher on npm pointing
         #      at this repo + workflow file
-        #
-        # Note: --provenance is intentionally omitted because npm requires a
-        # PUBLIC GitHub repo to verify the sigstore provenance bundle. When
-        # this repo is made public, add `--provenance` back to get attestation.
-        run: npm publish --access public
+        # --provenance attests via sigstore that the package was built from this
+        # exact public commit in this exact workflow — visible on the npm page.
+        run: npm publish --access public --provenance
