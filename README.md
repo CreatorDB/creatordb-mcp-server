@@ -130,7 +130,7 @@ The workflow validates that the tag matches `package.json` `version`, runs `npm 
 
 ## Tools
 
-31 tools across five categories. Every tool returns a structured JSON payload plus a `Credits used: N | Remaining: M` footer line.
+42 tools across six categories. Every tool returns a structured JSON payload plus a `Credits used: N | Remaining: M` footer line.
 
 ### Account (1)
 
@@ -151,7 +151,26 @@ The workflow validates that the tag matches `package.json` `version`, runs `npm 
 
 **Hashtag value gotcha:** stored hashtags on IG/TT carry the leading `#`, so filter values usually want `"#beauty"`, not `"beauty"`.
 
-### YouTube creator data (8 + 3 platform-specific)
+### Sponsors / brand data (8)
+
+Brand-side intelligence: which brands sponsor creators, how much they spend, which creators they work with. Sponsor data covers **YouTube and Instagram only** — TikTok is not indexed for brands.
+
+Brand-key: `brandId`, typically the brand's primary domain (e.g. `"acer.com"`, `"nike.com"`).
+
+| Tool | Cost | Returns |
+| --- | --- | --- |
+| `search_sponsors` | 2 per page | Brand search by structured filters. Lean records (brandId, name, logo, industries, country). |
+| `list_sponsors` | 1 per page | Paginated directory of all 10K+ indexed brands. |
+| `get_sponsor_information` | 2 | Full brand profile: aliases, keyPeople, industries, location, website, socialMedia, competitors. |
+| `get_sponsor_creators` | **25 per page** | Inverse of `get_*_sponsorship` — which creators has this brand sponsored. Returns followers, lastSponsoredDate, sponsoredCount, topics, niches per creator. |
+| `get_sponsor_performance` | **25 per page** | Per-content sponsorship perf. Three stats scopes per creator (creatorTotal, allSponsored lifetime, this-brand-only). YT-only: estimatedCost, CPM. |
+| `get_sponsor_audience` | **25** | Aggregated audience demographics across the brand's sponsored creator pool. IG block reserved but null today (backend YT-only). |
+| `get_sponsor_summary` | **25** | Cross-platform rollup: totalSponsoredCreators/Content, per-platform creators + performance + growth30d. |
+| `submit_sponsor` | 1 (0 if duplicate) | Submit a brand for indexing. Rate-limited 100/day per key. Returns submissionId + status. |
+
+**Cost warning** — `get_sponsor_creators`, `get_sponsor_performance`, `get_sponsor_audience`, `get_sponsor_summary` each cost **25 credits** per call. Use `search_sponsors` / `list_sponsors` / `get_sponsor_information` for cheap exploration first.
+
+### YouTube creator data (8 + 4 platform-specific)
 
 Creator-key: `channelId` (the UC… form — `@handle` / `/c/` / `/user/` URLs are not accepted; resolve first).
 
@@ -166,10 +185,11 @@ Creator-key: `channelId` (the UC… form — `@handle` / `/c/` / `/user/` URLs a
 | `get_youtube_sponsorship` | 5 | Sponsored content grouped by indexed brand (recent posts only — empty list ≠ "no sponsors"). |
 | `list_youtube_topics` | 1 | The full YT TOPIC taxonomy (~470+ entries with channelCount). **YouTube-only — IG and TT do not have a topic taxonomy.** No parameters. |
 | `list_youtube_niches` | 1 | The full YT NICHE taxonomy (~14K entries with channelCount). No parameters. |
+| `search_youtube_content` | 2 per page | Search individual VIDEOS/SHORTS/STREAMS by content-level filters (different from `search_youtube`, which searches creators). Returns title, publishTime, views, isSponsored, partneredBrands, hashtags + nested creator block. Both content-level and creator-level filters supported. |
 | `get_youtube_subtitles_meta` | 1 | Per-video subtitle track listing. Takes `videoId` (not channelId). |
 | `get_youtube_subtitles_download` | 3 | Subtitle text for one video. Takes `videoId`, optional `language` (ISO 639-3). |
 
-### Instagram creator data (8)
+### Instagram creator data (8 + 1)
 
 Creator-key: `uniqueId` (the handle, no `@`).
 
@@ -182,9 +202,10 @@ Creator-key: `uniqueId` (the handle, no `@`).
 | `get_instagram_audience` | 10 | Age buckets, gender split, top countries. |
 | `get_instagram_content_detail` | 2 | Recent images + reels with per-item engagement. |
 | `get_instagram_sponsorship` | 5 | Sponsored content grouped by indexed brand (recent posts only). |
+| `search_instagram_content` | 2 per page | Search individual IMAGES/REELS by content-level filters (different from `search_instagram`, which searches creators). NO views or lengthSec (IG data model). Returns description, publishTime, likes, isSponsored, partneredBrands, hashtags + nested creator block. |
 | `list_instagram_niches` | 1 | The full IG NICHE taxonomy. **Instagram does NOT have a "topics" taxonomy.** No parameters. |
 
-### TikTok creator data (7)
+### TikTok creator data (7 + 1)
 
 Creator-key: `uniqueId` (the handle, no `@`).
 
@@ -196,6 +217,7 @@ Creator-key: `uniqueId` (the handle, no `@`).
 | `get_tiktok_performance_history` | 3 | Daily snapshots over the past N days. Takes `pastDayRange`. |
 | `get_tiktok_audience` | 10 | Age buckets, gender split, top countries. |
 | `get_tiktok_content_detail` | 2 | Recent videos with audio metadata, duet/stitch/commerce flags, per-item engagement. |
+| `search_tiktok_content` | 2 per page | Search individual VIDEOS by content-level filters (different from `search_tiktok`, which searches creators). NO isSponsored/partneredBrands (TT brand-attribution not implemented). Filter terminology uses `diggs` but response normalizes to `likes`. |
 | `list_tiktok_niches` | 1 | The full TT NICHE taxonomy. **TikTok does NOT have a topics taxonomy, and does NOT expose a per-brand sponsorship endpoint.** No parameters. |
 
 ## Cross-platform differences cheat-sheet
@@ -214,6 +236,8 @@ Creator-key: `uniqueId` (the handle, no `@`).
 | Performance windows | R20 + all-time (up to 800) | First-page | Recent |
 | Engagement formula | (L+C+V) / subscribers | (L+C) / followers | (L+C+Shares) / followers |
 | Subtitles endpoints | ✅ | ❌ | ❌ |
+| Content-search endpoint | ✅ | ✅ | ✅ |
+| Brand-side sponsor data | ✅ | ✅ | ❌ |
 
 Niche IDs are **not interchangeable across platforms** — `id_vlog_PeopleBlogs` (YT) and `id_love_All` (IG) live in different namespaces. Niche/topic IDs follow the pattern `id_{slug}_{Category}`, so you can group by category by splitting on the last `_`.
 
@@ -363,10 +387,11 @@ src/
   index.ts                 # registers all tools, stdio transport
   tools/
     account.ts             # 1 tool
-    search.ts              # 4 tools (NLS + 3 platform searches)
-    youtube.ts             # 11 tools
-    instagram.ts           # 8 tools
-    tiktok.ts              # 7 tools
+    search.ts              # 4 tools (NLS + 3 platform creator searches)
+    youtube.ts             # 12 tools (incl. search_youtube_content)
+    instagram.ts           # 9 tools (incl. search_instagram_content)
+    tiktok.ts              # 8 tools (incl. search_tiktok_content)
+    sponsors.ts            # 8 tools (brand-side sponsor intelligence)
   util/
     api-client.ts          # fetch wrapper for REST + SSE
     response.ts            # MCP result formatter (credits, errors)

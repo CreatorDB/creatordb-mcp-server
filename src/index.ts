@@ -6,6 +6,7 @@ import { registerSearchTools } from './tools/search.js';
 import { registerYoutubeTools } from './tools/youtube.js';
 import { registerInstagramTools } from './tools/instagram.js';
 import { registerTiktokTools } from './tools/tiktok.js';
+import { registerSponsorTools } from './tools/sponsors.js';
 import { registerAccountTools } from './tools/account.js';
 
 const apiKey = process.env.CREATORDB_API_KEY;
@@ -24,6 +25,7 @@ registerSearchTools(server, apiKey);
 registerYoutubeTools(server, apiKey);
 registerInstagramTools(server, apiKey);
 registerTiktokTools(server, apiKey);
+registerSponsorTools(server, apiKey);
 registerAccountTools(server, apiKey);
 
 // Connect via stdio transport

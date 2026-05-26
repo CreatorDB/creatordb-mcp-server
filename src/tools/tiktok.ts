@@ -113,6 +113,61 @@ export function registerTiktokTools(server: McpServer, apiKey: string) {
   );
 
   server.tool(
+    'search_tiktok_content',
+    'Search individual TikTok content (videos) across CreatorDB\'s index. Different from ' +
+      'search_tiktok (which searches CREATORS) — this returns individual posts. Response ' +
+      'includes `contentList[]` with contentId, description, thumbnail, url, publishTime ' +
+      '(Unix-ms), lengthSec, plays/likes/comments/shares/engagementRate, hashtags, audioTitle, ' +
+      'audioAuthor, and a nested creator block. NO contentType field. NO isSponsored / ' +
+      'partneredBrands — TikTok brand-attribution is not implemented (native isAd flag exists on ' +
+      'get_tiktok_content_detail only). Content-level filterable: description, hashtag, ' +
+      'publishTime (integer "days ago"), plays, diggs (request name) / likes (response name), ' +
+      'comments, shares, engagement, lengthSec, performanceDiggs, performanceEngagement. ' +
+      'Creator-level filters also supported. Engagement formula = (likes+comments+shares)/' +
+      'followers. Costs 2 credits per page.',
+    {
+      filters: z
+        .array(
+          z.object({
+            filterName: z.string().describe('Field to filter on. See description for full list.'),
+            op: z.enum(['>', '=', '<', 'in']).describe('Comparison operator.'),
+            value: z
+              .union([z.string(), z.number(), z.boolean(), z.array(z.string()).max(100)])
+              .describe('Filter value (type must match the field).'),
+            isFuzzySearch: z.boolean().default(false).describe('Fuzzy matching for string fields.'),
+          }),
+        )
+        .min(1)
+        .max(10)
+        .describe('Content filters (1–10).'),
+      pageSize: z.number().min(1).max(100).default(20).describe('Results per page (max 100).'),
+      offset: z.number().min(0).default(0).describe('Number of records to skip for pagination.'),
+      sortBy: z
+        .enum([
+          'publishTime',
+          'plays',
+          'diggs',
+          'comments',
+          'shares',
+          'engagement',
+          'lengthSec',
+          'performanceDiggs',
+          'performanceEngagement',
+        ])
+        .default('publishTime')
+        .describe('Sort field.'),
+      desc: z.boolean().default(true).describe('Sort descending (true) or ascending (false).'),
+    },
+    async (params) => {
+      const result = await callApi(apiKey, '/tiktok/content-search', {
+        method: 'POST',
+        body: params,
+      });
+      return formatToolResult(result);
+    },
+  );
+
+  server.tool(
     'list_tiktok_niches',
     'List the full TikTok NICHE taxonomy used by CreatorDB — every available niche with ' +
       'channelCount per niche (the response is large: ~10K+ entries). NICHES are granular ' +
