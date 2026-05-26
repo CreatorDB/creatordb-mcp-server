@@ -1,5 +1,8 @@
 #!/usr/bin/env node
 
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { dirname, join } from 'node:path';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { registerSearchTools } from './tools/search.js';
@@ -15,9 +18,14 @@ if (!apiKey) {
   process.exit(1);
 }
 
+// Read version from the package's package.json so serverInfo.version stays in
+// sync with whatever npm shipped. From dist/index.js, package.json is one dir up.
+const here = dirname(fileURLToPath(import.meta.url));
+const { version } = JSON.parse(readFileSync(join(here, '..', 'package.json'), 'utf8'));
+
 const server = new McpServer({
   name: 'creatordb',
-  version: '1.0.0',
+  version,
 });
 
 // Register all tools
