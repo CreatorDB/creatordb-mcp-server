@@ -4,49 +4,115 @@ A [Model Context Protocol](https://modelcontextprotocol.io) server that exposes 
 
 Use it to search the CreatorDB index of YouTube, Instagram, and TikTok creators and pull profile, performance, audience demographics, content, contact, and sponsorship data from inside an AI conversation — no SaaS UI, no curl.
 
+> **Working with Claude Code?** Open this README in Claude Code (or paste the URL into a Claude session) and say *"set up this MCP for me."* The steps below are written so an AI assistant can follow them top to bottom.
+
+## Quick start
+
+1. **Prerequisites**
+   - Node.js 22 or newer (`node -v` to check)
+   - GitHub read access to `CreatorDB/creatordb-mcp-server` (this repo is private)
+   - A CreatorDB V3 API key — get one from <https://creatordb.app> account settings, or ask your team admin
+2. **Pick an install method** below (Method A is the fastest)
+3. **Restart your MCP client** so it picks up the new tools
+4. **Verify** by running `/mcp` in Claude Code — `creatordb` should appear with status `connected`
+
 ## Install
-
-```bash
-npm install
-npm run build
-```
-
-Requires Node ≥ 22.
-
-## Configure
 
 The server reads one environment variable: `CREATORDB_API_KEY` (your V3 key).
 
-### Claude Desktop
+### Method A — `npx` from git (zero local build, recommended)
 
-Add to `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS) or `%APPDATA%\Claude\claude_desktop_config.json` (Windows):
+Works because the repo's `prepare` script builds on install. Requires your SSH key be added to GitHub.
 
+**Claude Code:**
+```bash
+claude mcp add creatordb -s user \
+  -e CREATORDB_API_KEY=sk-your-key-here \
+  -- npx -y "git+ssh://git@github.com/CreatorDB/creatordb-mcp-server.git"
+```
+
+**Claude Desktop** — edit `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS) or `%APPDATA%\Claude\claude_desktop_config.json` (Windows):
 ```json
 {
   "mcpServers": {
     "creatordb": {
-      "command": "node",
-      "args": ["/absolute/path/to/creatordb-mcp-server/dist/index.js"],
-      "env": {
-        "CREATORDB_API_KEY": "sk-..."
-      }
+      "command": "npx",
+      "args": ["-y", "git+ssh://git@github.com/CreatorDB/creatordb-mcp-server.git"],
+      "env": { "CREATORDB_API_KEY": "sk-your-key-here" }
     }
   }
 }
 ```
 
-### Claude Code
+### Method B — clone and build locally
+
+Good if you want to read/modify the source, or if `npx` from git doesn't work in your environment.
 
 ```bash
-claude mcp add creatordb -- node /absolute/path/to/creatordb-mcp-server/dist/index.js
-# then set CREATORDB_API_KEY in the environment Claude Code inherits, or in the mcp config
+git clone https://github.com/CreatorDB/creatordb-mcp-server.git
+cd creatordb-mcp-server
+npm install
+npm run build
+
+# Then register with Claude Code:
+claude mcp add creatordb -s user \
+  -e CREATORDB_API_KEY=sk-your-key-here \
+  -- node "$(pwd)/dist/index.js"
 ```
 
-### Cursor / generic stdio
+For Claude Desktop, use the same JSON as Method A but swap `command` + `args`:
+```json
+"command": "node",
+"args": ["/absolute/path/to/creatordb-mcp-server/dist/index.js"],
+```
 
-Point any MCP-over-stdio client at `node dist/index.js` with `CREATORDB_API_KEY` exported.
+### Method C — project-scoped via `.mcp.json` (best for teams)
 
-> **Heads-up — MCP clients cache tool schemas at session start.** If you `npm run build` after a code change, restart the MCP client (or close + reopen the chat) so it re-reads the tool list. A stale schema is the #1 cause of "the new param doesn't work."
+Drop a `.mcp.json` into a CreatorDB project repo. Anyone who opens that repo in Claude Code gets prompted to enable the MCP — no per-person setup commands.
+
+```json
+{
+  "mcpServers": {
+    "creatordb": {
+      "command": "npx",
+      "args": ["-y", "git+ssh://git@github.com/CreatorDB/creatordb-mcp-server.git"],
+      "env": { "CREATORDB_API_KEY": "${CREATORDB_API_KEY}" }
+    }
+  }
+}
+```
+
+`${CREATORDB_API_KEY}` reads from the user's shell environment, so the key stays out of git. Each teammate sets it once in their `.zshrc`/`.bash_profile`:
+```bash
+export CREATORDB_API_KEY=sk-...
+```
+
+## Verify it works
+
+After install, restart Claude Code (or your MCP client) and:
+
+1. Run `/mcp` — you should see `creatordb` listed with status **connected**
+2. Ask Claude something that uses the tools, e.g. *"use creatordb to look up the YouTube profile for MrBeast (channelId UCX6OQ3DkcsbYNE6H8uQQuVA)"*
+3. The response should include creator data and a `Credits used: 2 | Remaining: …` footer
+
+## Troubleshooting
+
+| Symptom | Cause | Fix |
+| --- | --- | --- |
+| `/mcp` shows `creatordb` as `failed` or `connecting` forever | API key missing or wrong | Re-add with `claude mcp remove creatordb && claude mcp add …` using the correct key |
+| Tools work but every response ends `Credits used: undefined` | Stale tool schema from an older build of this server | Restart the MCP client — clients cache the schema at session start |
+| `Error: VALIDATION_ERROR` on Instagram tools | Passing `userId` instead of `uniqueId` | IG endpoints take the handle as `uniqueId`. Older clients with stale schemas hit this most |
+| `npx` install fails with permission denied | SSH key isn't authorized for the private repo | `gh auth login` or add your SSH key under <https://github.com/settings/keys> |
+| `Error: ENOENT` or `cannot find dist/index.js` | Method B didn't run `npm run build` | `cd` into the repo and run `npm install && npm run build` |
+| Tool descriptions seem outdated vs this README | Schema cached from an old version | `claude mcp remove creatordb && claude mcp add …` to force a re-fetch |
+
+> **Why restarts matter** — MCP clients fetch the tool list once at session start. Server updates (new tools, renamed params, fixed costs) only show up after the client reconnects. This is the single most common confusion.
+
+## Roadmap
+
+- **Now** (this repo, private): `npx` from git + `.mcp.json` for team usage.
+- **Next**: publish to public npm as `@creatordb/mcp-server` so any user can run `npx -y @creatordb/mcp-server` without needing repo access.
+- **Goal**: list in the [MCP registry](https://modelcontextprotocol.io) and Claude's MCP marketplace so it shows up when users search inside Claude Code's `/mcp` UI.
 
 ## Tools
 
