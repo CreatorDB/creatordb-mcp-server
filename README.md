@@ -20,15 +20,15 @@ Use it to search the CreatorDB index of YouTube, Instagram, and TikTok creators 
 
 The server reads one environment variable: `CREATORDB_API_KEY` (your V3 key).
 
-### Method A — `npx` from git (zero local build, recommended)
+### Method A — `npx` from npm (recommended once published)
 
-Works because the repo's `prepare` script builds on install. Requires your SSH key be added to GitHub.
+The package is published to npm as **`@creatordbai/mcp-server`**. No local clone, no SSH key, no GitHub access required:
 
 **Claude Code:**
 ```bash
 claude mcp add creatordb -s user \
   -e CREATORDB_API_KEY=sk-your-key-here \
-  -- npx -y "git+ssh://git@github.com/CreatorDB/creatordb-mcp-server.git"
+  -- npx -y @creatordbai/mcp-server
 ```
 
 **Claude Desktop** — edit `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS) or `%APPDATA%\Claude\claude_desktop_config.json` (Windows):
@@ -37,12 +37,14 @@ claude mcp add creatordb -s user \
   "mcpServers": {
     "creatordb": {
       "command": "npx",
-      "args": ["-y", "git+ssh://git@github.com/CreatorDB/creatordb-mcp-server.git"],
+      "args": ["-y", "@creatordbai/mcp-server"],
       "env": { "CREATORDB_API_KEY": "sk-your-key-here" }
     }
   }
 }
 ```
+
+If you have GitHub org access and want to track `main` instead of the npm release, swap the npm name for `git+ssh://git@github.com/CreatorDB/creatordb-mcp-server.git` — the repo's `prepare` script will build on install.
 
 ### Method B — clone and build locally
 
@@ -108,11 +110,23 @@ After install, restart Claude Code (or your MCP client) and:
 
 > **Why restarts matter** — MCP clients fetch the tool list once at session start. Server updates (new tools, renamed params, fixed costs) only show up after the client reconnects. This is the single most common confusion.
 
+## Releasing (maintainers)
+
+The `.github/workflows/release.yml` workflow publishes to npm whenever a `v*.*.*` tag is pushed.
+
+```bash
+# bump version, commit, tag, push
+npm version patch              # or minor / major
+git push && git push --tags
+```
+
+The workflow validates that the tag matches `package.json` `version`, runs `npm ci`, builds, and publishes with provenance attestation. Requires an `NPM_TOKEN` repo secret (automation token from npm).
+
 ## Roadmap
 
-- **Now** (this repo, private): `npx` from git + `.mcp.json` for team usage.
-- **Next**: publish to public npm as `@creatordb/mcp-server` so any user can run `npx -y @creatordb/mcp-server` without needing repo access.
-- **Goal**: list in the [MCP registry](https://modelcontextprotocol.io) and Claude's MCP marketplace so it shows up when users search inside Claude Code's `/mcp` UI.
+- **Now**: publish to public npm as `@creatordbai/mcp-server` (this repo is private; the npm package is public).
+- **Soon**: also publish under `@creatordb/mcp-server` once the dormant npm scope is transferred — we've requested the transfer from npm support based on the @creatordb scope having zero published packages and our pre-existing brand identity (creatordb.app, creatordb.ai, github.com/CreatorDB).
+- **Goal**: list in the [MCP registry](https://modelcontextprotocol.io) and Claude's MCP marketplace so the server shows up when users search inside Claude Code's `/mcp` UI.
 
 ## Tools
 

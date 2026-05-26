@@ -1,5 +1,5 @@
 {
-  "name": "creatordb-mcp-server",
+  "name": "@creatordbai/mcp-server",
   "version": "1.0.0",
   "description": "MCP server for CreatorDB V3 API — search and analyze creators across YouTube, Instagram, and TikTok",
   "type": "module",
@@ -11,14 +11,28 @@
     "build": "tsc",
     "start": "node dist/index.js",
     "dev": "tsc --watch",
-    "prepare": "npm run build"
+    "prepare": "npm run build",
+    "prepublishOnly": "npm run build"
   },
   "files": [
     "dist",
-    "README.md"
+    "README.md",
+    "LICENSE"
   ],
-  "keywords": ["mcp", "creatordb", "influencer", "youtube", "instagram", "tiktok"],
+  "keywords": ["mcp", "model-context-protocol", "creatordb", "influencer", "creator", "youtube", "instagram", "tiktok", "claude"],
   "license": "MIT",
+  "author": "CreatorDB",
+  "homepage": "https://github.com/CreatorDB/creatordb-mcp-server#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/CreatorDB/creatordb-mcp-server.git"
+  },
+  "bugs": {
+    "url": "https://github.com/CreatorDB/creatordb-mcp-server/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.12.1",
     "zod": "^3.24.4"
