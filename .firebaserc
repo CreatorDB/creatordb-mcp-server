@@ -1,5 +1,15 @@
 {
   "projects": {
     "default": "data-services-cfd88"
-  }
+  },
+  "targets": {
+    "data-services-cfd88": {
+      "hosting": {
+        "mcp": [
+          "creatordb-mcp"
+        ]
+      }
+    }
+  },
+  "etags": {}
 }
