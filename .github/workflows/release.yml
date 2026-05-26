@@ -21,6 +21,10 @@ jobs:
           node-version: 22
           registry-url: https://registry.npmjs.org
 
+      - name: Upgrade npm to a version that supports Trusted Publishing
+        # Trusted Publishing requires npm >= 11.5.1; Node 22 ships with npm 10.x.
+        run: npm install -g npm@latest
+
       - name: Verify tag matches package.json version
         run: |
           TAG_VERSION="${GITHUB_REF_NAME#v}"
@@ -36,7 +40,10 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Publish to npm
+      - name: Publish to npm via Trusted Publishing
+        # No NPM_TOKEN needed — npm CLI exchanges the GitHub OIDC token for a
+        # short-lived npm publish token automatically when:
+        #   1. The workflow has `permissions: id-token: write` (above)
+        #   2. The package is configured with a Trusted Publisher on npm pointing
+        #      at this repo + workflow file
         run: npm publish --access public --provenance
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
