@@ -110,6 +110,8 @@ After install, restart Claude Code (or your MCP client) and:
 
 > **Why restarts matter** — MCP clients fetch the tool list once at session start. Server updates (new tools, renamed params, fixed costs) only show up after the client reconnects. This is the single most common confusion.
 
+> **Upgrading to a newer published version?** `npx` caches packages by exact version, so a configured client keeps running whatever version it first downloaded. To force-pull the latest, either pin to `@latest` in your config (`npx -y @creatordbai/mcp-server@latest` re-resolves each launch) or clear the npx cache once (`rm -rf ~/.npm/_npx`). Then restart the MCP client.
+
 ## Releasing (maintainers)
 
 The `.github/workflows/release.yml` workflow publishes to npm whenever a `v*.*.*` tag is pushed.
