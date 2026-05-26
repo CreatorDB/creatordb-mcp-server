@@ -19,7 +19,7 @@ import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/
 import { registerAllTools } from '@creatordbai/mcp-server/register-tools';
 
 const SERVER_NAME = 'creatordb';
-const SERVER_VERSION = '1.2.1';
+const SERVER_VERSION = '1.3.0';
 
 function extractApiKey(req: { get: (h: string) => string | undefined }): string | null {
   const auth = req.get('authorization') || req.get('Authorization') || '';
