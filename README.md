@@ -2,7 +2,16 @@
 
 A [Model Context Protocol](https://modelcontextprotocol.io) server that exposes the [CreatorDB V3 API](https://apiv3.creatordb.app) to any MCP-compatible client (Claude Code, Claude Desktop, Cursor, etc.).
 
-Use it to search the CreatorDB index of YouTube, Instagram, and TikTok creators and pull profile, performance, audience demographics, content, contact, and sponsorship data from inside an AI conversation — no SaaS UI, no curl.
+**42 tools across six surfaces:**
+
+- **Creator-side data** — profile, performance, audience demographics, contact, content-detail, performance history for YouTube, Instagram, and TikTok
+- **Creator search** — natural-language search across all three platforms, plus structured filter search per platform (country, language, follower thresholds, niches, hashtags, audience demographics, etc.)
+- **Brand-side / sponsor intelligence** *(YouTube + Instagram only — TikTok brand data is not indexed)* — search CreatorDB's 10K+ indexed brands, pull a brand's full profile, list every creator a brand has sponsored, get aggregated audience demographics across a brand's sponsored creator pool, and cross-platform spend / CPM / CPE rollups. Most sponsor read endpoints cost 25 credits each — use deliberately.
+- **Content search** — find individual videos, reels, images, shorts, or TikToks by content-level filters (publish time window, view/like thresholds, hashtags, sponsored-vs-organic, language, niche, etc.). Different from creator search — this returns posts, not channels.
+- **Topic + niche taxonomies** — full catalogs (~470 YT topics, ~14K YT niches, ~10K each on IG/TT) for resolving the per-creator topic/niche IDs returned in profile responses.
+- **Account** — credit usage broken down by endpoint and platform.
+
+Every tool returns the underlying V3 JSON plus a `Credits used: N | Remaining: M` footer line, so the AI knows exactly what it's spending.
 
 > **Working with Claude Code?** Open this README in Claude Code (or paste the URL into a Claude session) and say *"set up this MCP for me."* The steps below are written so an AI assistant can follow them top to bottom.
 
@@ -104,7 +113,7 @@ After install, restart Claude Code (or your MCP client) and:
 | `/mcp` shows `creatordb` as `failed` or `connecting` forever | API key missing or wrong | Re-add with `claude mcp remove creatordb && claude mcp add …` using the correct key |
 | Tools work but every response ends `Credits used: undefined` | Stale tool schema from an older build of this server | Restart the MCP client — clients cache the schema at session start |
 | `Error: VALIDATION_ERROR` on Instagram tools | Passing `userId` instead of `uniqueId` | IG endpoints take the handle as `uniqueId`. Older clients with stale schemas hit this most |
-| `npx` install fails with permission denied | SSH key isn't authorized for the private repo | `gh auth login` or add your SSH key under <https://github.com/settings/keys> |
+| `npx` install fails with `EACCES: permission denied` | npx cache permission issue | `rm -rf ~/.npm/_npx` and re-run |
 | `Error: ENOENT` or `cannot find dist/index.js` | Method B didn't run `npm run build` | `cd` into the repo and run `npm install && npm run build` |
 | Tool descriptions seem outdated vs this README | Schema cached from an old version | `claude mcp remove creatordb && claude mcp add …` to force a re-fetch |
 
@@ -122,13 +131,12 @@ npm version patch              # or minor / major
 git push && git push --tags
 ```
 
-The workflow validates that the tag matches `package.json` `version`, runs `npm ci`, builds, and publishes with provenance attestation. Requires an `NPM_TOKEN` repo secret (automation token from npm).
+The workflow validates that the tag matches `package.json` `version`, runs `npm ci`, builds, and publishes via [npm Trusted Publishing](https://docs.npmjs.com/trusted-publishers) with sigstore provenance attestation. No long-lived `NPM_TOKEN` is stored — the workflow exchanges a GitHub OIDC token for a short-lived npm publish token at runtime.
 
 ## Roadmap
 
-- **Now**: publish to public npm as `@creatordbai/mcp-server` (this repo is private; the npm package is public).
-- **Soon**: also publish under `@creatordb/mcp-server` once the dormant npm scope is transferred — we've requested the transfer from npm support based on the @creatordb scope having zero published packages and our pre-existing brand identity (creatordb.app, creatordb.ai, github.com/CreatorDB).
-- **Goal**: list in the [MCP registry](https://modelcontextprotocol.io) and Claude's MCP marketplace so the server shows up when users search inside Claude Code's `/mcp` UI.
+- **Goal**: list in the [MCP registry](https://modelcontextprotocol.io) and Claude's MCP marketplace so the server shows up when users browse MCP servers from inside their client.
+- Contributions, issues, and feedback welcome — see [Getting help](#getting-help) below.
 
 ## Tools
 
@@ -255,7 +263,7 @@ Shared across YT/IG/TT:
 - `niches: ["id_vlog_PeopleBlogs", …]` — per-creator niche IDs. To resolve the human-readable name + category + channelCount, cross-reference `list_{platform}_niches`.
 - `relatedCreators` — discovery vector. YT gives ~50–250 UC channelIds; IG gives ~50 handles. Cheap way to expand a seed list.
 - `lastPublishTime` / `lastDbUpdateTime` — Unix-ms; pair them to know how stale the snapshot is vs how recently the creator posted.
-- `country` — ISO 3166-1 alpha-3 (e.g. `"USA"`, `"JPN"`). On IG this is the field with the known Israeli-creator bias bug (sometimes returns JPN/THA/ITA for `country: ISR`).
+- `country` — ISO 3166-1 alpha-3 (e.g. `"USA"`, `"JPN"`). On IG this value is derived from a content classifier rather than a self-declared field, and can occasionally be wrong for creators with multi-country presence — cross-check against `audienceLocations` and the creator's bio if accuracy matters.
 
 YT-only:
 - `topics: ["id_challenges_Comedy", …]` — coarse topic IDs (~470 universe). Resolve via `list_youtube_topics`.
@@ -335,7 +343,7 @@ NLS response:
 - **`relatedCreators` is unranked** — order is not significance. Don't slice the first N and call them "top related"; sample or rerank by your own metric.
 - **Freshness lag** — `lastDbUpdateTime` is when CreatorDB last refreshed. If it's older than ~14 days, the profile may not reflect recent breakout content.
 - **Niche channelCount drifts** — `list_*_niches` is updated daily; don't cache it longer than that or your "creators in X niche" count will lag reality.
-- **IG country bias** — see [v3-deployed-quirks memory + project memory on Israeli creators]. If `country` looks wrong for an IG creator, the AI location classifier is the suspect; BQ `bdMisc.countryCode` often has the right answer but isn't read by V3.
+- **IG `country` is classifier-derived** — unlike YT/TT (which read from self-declared profile fields), Instagram `country` is inferred from content. Treat it as a best-effort signal, not ground truth. Cross-check against `audienceLocations` and bio language when accuracy matters.
 
 ## Filter reference (search tools)
 
@@ -398,6 +406,12 @@ src/
     api-client.ts          # fetch wrapper for REST + SSE
     response.ts            # MCP result formatter (credits, errors)
 ```
+
+## Getting help
+
+- **Bugs / feature requests / new endpoint coverage**: open an issue at <https://github.com/CreatorDB/creatordb-mcp-server/issues>
+- **API key / data questions**: <hello@creatordb.app>
+- **Just trying to install it on your machine?** See [SETUP.md](./SETUP.md) — a 5-minute guide aimed at end users rather than contributors.
 
 ## License
 

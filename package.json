@@ -1,6 +1,6 @@
 {
   "name": "@creatordbai/mcp-server",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "MCP server for CreatorDB V3 API — search and analyze creators across YouTube, Instagram, and TikTok",
   "type": "module",
   "main": "dist/index.js",

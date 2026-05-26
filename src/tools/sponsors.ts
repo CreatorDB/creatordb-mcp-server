@@ -59,9 +59,9 @@ export function registerSponsorTools(server: McpServer, apiKey: string) {
   server.tool(
     'list_sponsors',
     'Paginated directory of every brand indexed in CreatorDB (10K+ brands). Returns brandId, ' +
-      'name, logo, industries, country, sponsoringPlatforms (currently TitleCase: "YouTube" / ' +
-      '"Instagram" — lowercase migration pending), totalSponsoredContent. Use search_sponsors when ' +
-      'you need filtering; this is for browsing the full catalog. Costs 1 credit per page.',
+      'name, logo, industries, country, sponsoringPlatforms (TitleCase strings: "YouTube", ' +
+      '"Instagram"), totalSponsoredContent. Use search_sponsors when you need filtering; this is ' +
+      'for browsing the full catalog. Costs 1 credit per page.',
     {
       pageSize: z.number().min(1).max(100).default(50).describe('Results per page (max 100).'),
       offset: z.number().min(0).default(0).describe('Number of records to skip for pagination.'),
@@ -105,9 +105,8 @@ export function registerSponsorTools(server: McpServer, apiKey: string) {
     'get_sponsor_creators',
     'List creators a brand has sponsored (inverse of get_*_sponsorship). Returns each creator ' +
       'with displayName, country, followers, sponsoredContent[] (URLs), topics, niches, ' +
-      'sponsoredCount, lastSponsoredDate, avgRecentSponsoredEngagementRate (cross-brand aggregate ' +
-      'today — lifetime on IG, R20 on YT — backend fix pending). ' +
-      'EXPENSIVE: costs 25 credits per page.',
+      'sponsoredCount, lastSponsoredDate, avgRecentSponsoredEngagementRate (cross-brand aggregate: ' +
+      'lifetime window on Instagram, R20 window on YouTube). EXPENSIVE: costs 25 credits per page.',
     {
       brandId: z.string().describe('Brand ID (e.g. "acer.com").'),
       platform: platformParam,

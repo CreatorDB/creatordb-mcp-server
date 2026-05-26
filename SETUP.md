@@ -54,7 +54,7 @@ If the file already has other MCP servers, just add the `creatordb` entry inside
 
 ### Method 2 — clone and build locally
 
-Use this if you want to read or modify the source. Requires GitHub read access to `CreatorDB/creatordb-mcp-server` (private repo).
+Use this if you want to read or modify the source.
 
 ```bash
 git clone https://github.com/CreatorDB/creatordb-mcp-server.git
@@ -103,43 +103,73 @@ You should get back display name, subscriber count, country, hashtags, related c
 
 42 tools across six categories. A non-exhaustive sampler:
 
-### Search and discover
+### Find creators
 
-- **Natural language**: *"Find US-based YouTube beauty creators with over 5M subscribers"* — uses `search_creators_nls`
-- **Structured filters**: country = JPN AND totalFollowers > 5M, sorted by followers — uses `search_youtube` / `search_instagram` / `search_tiktok`
-- **Search individual posts** (not creators): *"Find Instagram reels mentioning #vegan in the last 7 days"* — uses `search_*_content`
+- **Natural language across platforms**: *"Find US-based YouTube beauty creators with over 5M subscribers"* — `search_creators_nls` (the AI picks the right platform and converts your prompt into structured filters)
+- **Structured filters per platform**: country, language, follower thresholds, niches, hashtags, audience demographics, sponsorship status — `search_youtube` / `search_instagram` / `search_tiktok`. Common YT field is `totalSubscribers`; IG/TT use `totalFollowers`. Each search costs 1 credit per 10 filters.
+
+### Find individual posts (content search)
+
+Different from creator search — this returns videos / reels / images / shorts / TikToks rather than channels. Useful for trend analysis, campaign-style sweeps, or sponsorship discovery at the content level.
+
+- **YouTube videos / shorts / streams** — `search_youtube_content`. Filterable by `publishTime` (days ago), `views`, `likes`, `comments`, `engagement`, `lengthSec`, `isSponsored`, `partneredBrands`, `language`, `category`, and creator-level fields (country, niches, topics, etc.). Returns title, thumbnail, URL, hashtags, sponsorship flags, plus a nested creator block.
+- **Instagram images / reels / slideshows** — `search_instagram_content`. No `views` or `lengthSec` (IG data model limit). Description filter searches caption AND reel title together. `isSponsored` filter respects the `partneredBrands` index.
+- **TikTok videos** — `search_tiktok_content`. Filterable by `plays`, `diggs` (likes), `comments`, `shares`, `engagement`, `lengthSec`. **No `isSponsored` / `partneredBrands` filter** — TikTok brand-attribution isn't implemented yet on the V3 side.
+
+Common pattern across all three: filter values for numeric ops must be numbers, not numeric strings; hashtag values on IG/TT need a `#` prefix. Each content-search call costs 2 credits per page.
 
 ### Pull data on a known creator
 
-- Profile, follower count, languages, linked socials, hashtags, related creators — `get_*_profile`
-- Audience demographics (top countries, age buckets, gender split) — `get_*_audience`
-- Engagement metrics + consistency scores — `get_*_performance`
-- Daily snapshots over time — `get_*_performance_history`
-- Recent posts with per-item engagement — `get_*_content_detail`
-- Sponsored content + indexed brands (YT/IG only — TT not supported) — `get_*_sponsorship`
+- Profile (handle, followers, country, languages, linked socials, hashtags, related creators, plus YT-only `videoPrice`/`shortsPrice` CPM bands) — `get_*_profile`
+- Audience demographics (top 6 countries, gender split, average age, fixed 7-bucket age breakdown) — `get_*_audience` (10 credits)
+- Engagement metrics + consistency scores (YT also exposes an all-time window of up to 800 videos in addition to the recent R20) — `get_*_performance`
+- Daily metric snapshots over a `pastDayRange` (1–365 days) — `get_*_performance_history`
+- Recent posts with per-item engagement (TT items include audio metadata; YT includes `isMemberOnly`; IG includes `mentionedCreators`) — `get_*_content_detail`
+- Sponsored content grouped by indexed brand — `get_*_sponsorship` (YouTube + Instagram only; TikTok not supported). Empty list ≠ "no sponsors" — only the most recent ~20–30 posts are scanned against the indexed brand list
 - Email contacts — `get_*_contact` (15 credits — use sparingly)
 
-### Brand-side intelligence (YouTube + Instagram only — no TikTok brand data)
+### Brand-side / sponsor intelligence
 
-- *"Which brands has Nike sponsored on YouTube?"* — `search_sponsors`
-- *"Which YT creators has Acer worked with?"* — `get_sponsor_creators`
-- Aggregated audience across a brand's sponsored creator pool — `get_sponsor_audience`
-- Cross-platform sponsorship rollup with spend estimates — `get_sponsor_summary`
+**YouTube + Instagram only** — TikTok brand data is not indexed in CreatorDB.
+
+Brand-key is `brandId`, typically the brand's primary domain (e.g. `"acer.com"`, `"nike.com"`).
+
+- **Search brands** — *"Which brands sponsor YouTube creators in the gaming vertical?"* — `search_sponsors` (2 credits per page). Filterable by industry, country, sponsoring platforms, total sponsored content, and YouTube spend estimates (7d/30d/90d).
+- **Browse the brand catalog** — `list_sponsors` (1 credit per page) for paginating through all 10K+ indexed brands without filters.
+- **Brand profile** — `get_sponsor_information` (2 credits). Aliases, logo, description, company size, key people, industries, location, website, social media, competitors.
+- **Which creators has a brand sponsored?** — `get_sponsor_creators` (**25 credits per page**). Inverse of `get_*_sponsorship`. Returns per-creator followers, sponsoredCount, lastSponsoredDate, and the URLs of their sponsored posts.
+- **How are those sponsored posts performing?** — `get_sponsor_performance` (**25 credits per page**). Per-creator stats in three scopes (lifetime, all-sponsored, this-brand-only) plus per-content engagement. YouTube-only fields: `estimatedCost`, `estimatedCreatorCPM`, `estimatedContentCPM`.
+- **Audience demographics across the sponsored creator pool** — `get_sponsor_audience` (**25 credits**). Top 5 countries, gender split, age breakdown, aggregated across every creator this brand has worked with. YouTube data populated today; Instagram block reserved.
+- **Cross-platform rollup** — `get_sponsor_summary` (**25 credits**). Per-platform creator counts, location/language breakdowns, spend estimates (7d/30d/90d), CPM30d, CPE30d, views/likes/comments aggregates, growth30d deltas. The fastest way to scope a competitor's influencer strategy.
+- **Submit a brand for indexing** — `submit_sponsor` (1 credit on acceptance, 0 on duplicate). Rate-limited to 100/day per API key.
+
+### Topic + niche taxonomies
+
+CreatorDB classifies every creator into topics (coarse, YouTube-only) and niches (granular, per-platform). The per-creator IDs come back in `/profile` responses as opaque strings like `id_vlog_PeopleBlogs`. To resolve those to human names / channel counts, list the catalog:
+
+- `list_youtube_topics` (1 credit) — ~470 topic entries. YouTube-only.
+- `list_youtube_niches` / `list_instagram_niches` / `list_tiktok_niches` (1 credit each) — full niche catalog per platform (10K–14K entries each).
+
+Each platform has its own independent niche namespace — `id_vlog_PeopleBlogs` (YT) and `id_love_All` (IG) live in different namespaces and aren't interchangeable.
 
 ### Account
 
-- Your daily API credit usage broken down by endpoint — `get_api_usage` (free, 0 credits)
+- `get_api_usage` (free, 0 credits) — daily request counts and credit consumption broken down by endpoint and platform. Defaults to last 7 days.
 
-### Quick reference: the expensive tools
+### Cost quick-reference
 
-Most tools cost 1–5 credits. **Four sponsor endpoints cost 25 credits each** — use them deliberately, not for exploration:
+Most tools cost 1–5 credits. The exceptions to know:
 
-- `get_sponsor_creators`
-- `get_sponsor_performance`
-- `get_sponsor_audience`
-- `get_sponsor_summary`
+| Tool | Cost | Why expensive |
+| --- | --- | --- |
+| `get_*_contact` | 15 | Email lookup |
+| `get_*_audience` | 10 | Demographics computation |
+| `get_sponsor_creators` | 25/page | Cross-creator aggregation |
+| `get_sponsor_performance` | 25/page | Per-content stats × per-creator stats |
+| `get_sponsor_audience` | 25 | Pool-level demographics |
+| `get_sponsor_summary` | 25 | Cross-platform rollup |
 
-Plus contacts cost 15 credits per creator. Audience demographics for a single creator costs 10.
+Use `search_sponsors` / `list_sponsors` / `get_sponsor_information` (1–2 credits each) for cheap brand exploration first; reserve the 25-credit tools for brands you've already shortlisted.
 
 For the full 42-tool reference with response shapes and gotchas, see the main [README on GitHub](https://github.com/CreatorDB/creatordb-mcp-server#tools).
 
