@@ -12,7 +12,7 @@ You need three things:
 
 1. **Node.js 22 or newer** — `node -v` to check. Get it from <https://nodejs.org> if missing.
 2. **An MCP-compatible client** — Claude Code, Claude Desktop, or Cursor.
-3. **A CreatorDB V3 API key** — ask Dominic or grab one from your CreatorDB account settings. Keep it private; it's tied to your credit pool.
+3. **A CreatorDB V3 API key** — email <hello@creatordb.app> or grab one from your CreatorDB account settings. Keep it private; it's tied to your credit pool.
 
 ---
 
@@ -175,7 +175,7 @@ The three platforms have meaningful differences that the AI sometimes doesn't ca
 | `Error: ENOENT` or `cannot find dist/index.js` (Method 2 only) | Forgot `npm run build` after cloning | `cd` into the repo and run `npm install && npm run build` |
 | Behavior seems wrong but no error | Check `/mcp` to confirm `creatordb` is connected. If it shows fewer than 42 tools, you have an older cached version — see "Upgrading" below |
 
-If none of these match, send Dominic a screenshot of `/mcp` output plus the failing message.
+If none of these match, send <hello@creatordb.app> a screenshot of `/mcp` output plus the failing message.
 
 ---
 
@@ -207,8 +207,8 @@ To verify which version is running, in any Claude session ask: *"What version of
 
 ## Getting help
 
-- **Issues with the MCP server itself** (bugs, missing tools, weird behavior): file an issue at <https://github.com/CreatorDB/creatordb-mcp-server/issues>, or ping Dominic
-- **Questions about CreatorDB's data** (why does a creator look this way, why is country wrong, etc.): same — ping Dominic
-- **Wanting a new tool that wraps an endpoint we don't expose**: send the V3 endpoint path + use case; happy to add
+- **Issues with the MCP server itself** (bugs, missing tools, weird behavior): file an issue at <https://github.com/CreatorDB/creatordb-mcp-server/issues>, or email <hello@creatordb.app>
+- **Questions about CreatorDB's data** (why does a creator look this way, why is country wrong, etc.): email <hello@creatordb.app>
+- **Wanting a new tool that wraps an endpoint we don't expose**: open a GitHub issue with the V3 endpoint path + use case, or email <hello@creatordb.app> — happy to add
 
 The MCP is intentionally a thin wrapper over the V3 API. If something the V3 API supports isn't in the MCP, it's a missing tool, not a missing feature — please ask and we'll add it.
