@@ -1,5 +1,7 @@
 node_modules/
 dist/
+functions/lib/
+functions/node_modules/
 .env
 .env.*
 !.env.example
@@ -8,3 +10,6 @@ dist/
 npm-debug.log*
 .vscode/
 .idea/
+.firebase/
+firebase-debug.log
+firebase-debug.*.log

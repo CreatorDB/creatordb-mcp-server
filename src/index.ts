@@ -5,12 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
-import { registerSearchTools } from './tools/search.js';
-import { registerYoutubeTools } from './tools/youtube.js';
-import { registerInstagramTools } from './tools/instagram.js';
-import { registerTiktokTools } from './tools/tiktok.js';
-import { registerSponsorTools } from './tools/sponsors.js';
-import { registerAccountTools } from './tools/account.js';
+import { registerAllTools } from './register-tools.js';
 
 const apiKey = process.env.CREATORDB_API_KEY;
 if (!apiKey) {
@@ -28,13 +23,7 @@ const server = new McpServer({
   version,
 });
 
-// Register all tools
-registerSearchTools(server, apiKey);
-registerYoutubeTools(server, apiKey);
-registerInstagramTools(server, apiKey);
-registerTiktokTools(server, apiKey);
-registerSponsorTools(server, apiKey);
-registerAccountTools(server, apiKey);
+registerAllTools(server, apiKey);
 
 // Connect via stdio transport
 const transport = new StdioServerTransport();

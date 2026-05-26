@@ -4,6 +4,10 @@
   "description": "MCP server for CreatorDB V3 API — search and analyze creators across YouTube, Instagram, and TikTok",
   "type": "module",
   "main": "dist/index.js",
+  "exports": {
+    ".": "./dist/index.js",
+    "./register-tools": "./dist/register-tools.js"
+  },
   "bin": {
     "creatordb-mcp-server": "dist/index.js"
   },

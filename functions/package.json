@@ -1,0 +1,28 @@
+{
+  "name": "creatordb-mcp-server-functions",
+  "version": "1.0.0",
+  "description": "Firebase Cloud Functions deployment of the CreatorDB MCP server (HTTP transport for Claude web/mobile)",
+  "private": true,
+  "type": "module",
+  "main": "lib/index.js",
+  "scripts": {
+    "build": "tsc",
+    "build:watch": "tsc --watch",
+    "serve": "npm run build && firebase emulators:start --only functions",
+    "deploy": "npm run build && firebase deploy --only functions:mcp",
+    "logs": "firebase functions:log"
+  },
+  "engines": {
+    "node": "22"
+  },
+  "dependencies": {
+    "@creatordbai/mcp-server": "file:..",
+    "@modelcontextprotocol/sdk": "^1.12.1",
+    "firebase-functions": "^6.0.0",
+    "zod": "^3.24.4"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.3",
+    "@types/node": "^22.15.3"
+  }
+}
