@@ -17,17 +17,23 @@ Every tool returns the underlying V3 JSON plus a `Credits used: N | Remaining: M
 
 ## Quick start
 
+There are two ways to connect, depending on your client:
+
+- **Local clients** (Claude Code, Claude Desktop, Cursor) run the server as a subprocess via `npx` — see [Install (local / stdio)](#install-local--stdio).
+- **Web / mobile clients** (Claude web, Claude mobile) can't spawn subprocesses, so they connect to the hosted HTTP endpoint — see [Remote connector (Claude web / mobile)](#remote-connector-claude-web--mobile).
+
+Both expose the same 42 tools. Both need a CreatorDB V3 API key.
+
 1. **Prerequisites**
-   - Node.js 22 or newer (`node -v` to check)
-   - GitHub read access to `CreatorDB/creatordb-mcp-server` (this repo is private)
+   - For the local route: Node.js 22 or newer (`node -v` to check)
    - A CreatorDB V3 API key — get one from <https://creatordb.app> account settings, or ask your team admin
-2. **Pick an install method** below (Method A is the fastest)
+2. **Pick a connection method** below
 3. **Restart your MCP client** so it picks up the new tools
 4. **Verify** by running `/mcp` in Claude Code — `creatordb` should appear with status `connected`
 
-## Install
+## Install (local / stdio)
 
-The server reads one environment variable: `CREATORDB_API_KEY` (your V3 key).
+For Claude Code, Claude Desktop, and Cursor. The server reads one environment variable: `CREATORDB_API_KEY` (your V3 key).
 
 ### Method A — `npx` from npm (recommended)
 
@@ -97,6 +103,23 @@ Drop a `.mcp.json` into a CreatorDB project repo. Anyone who opens that repo in 
 ```bash
 export CREATORDB_API_KEY=sk-...
 ```
+
+## Remote connector (Claude web / mobile)
+
+Claude in the browser and the mobile apps can't spawn local subprocesses, so they connect to the **hosted HTTP endpoint** instead of running `npx`:
+
+```
+URL:  https://mcp.creatordb.app/mcp
+Auth: Authorization: Bearer <your CreatorDB V3 API key>
+```
+
+In Claude web: **Settings → Connectors → Add custom connector**, paste the URL, and provide your V3 API key as a Bearer token. The same 42 tools appear.
+
+Notes:
+- The endpoint is stateless — your API key is read per-request from the `Authorization` header and never stored server-side.
+- Hosted as a Firebase Cloud Function (gen 2) in `asia-northeast1`; source is in [`functions/`](./functions).
+- A health check is available at <https://mcp.creatordb.app/health> (no auth, 0 credits) — returns `{"status":"ok",...}` if the service is up.
+- Visiting <https://mcp.creatordb.app> in a browser shows a short landing page with these same instructions.
 
 ## Verify it works
 

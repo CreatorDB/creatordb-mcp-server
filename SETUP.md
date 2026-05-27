@@ -16,6 +16,11 @@ You need three things:
 
 ---
 
+## Which client are you on?
+
+- **Claude Code, Claude Desktop, Cursor** (desktop apps that run locally) → use the **local install** below.
+- **Claude web (claude.ai) or Claude mobile** → these can't run a local process. Skip to [Claude web / mobile](#claude-web--mobile) at the bottom.
+
 ## Install (pick one method)
 
 > **Recommended: Method 1** — it pulls the latest version on every launch and needs no manual cloning. Method 2 is for when you want to read/modify the source.
@@ -232,6 +237,24 @@ To verify which version is running, in any Claude session ask: *"What version of
 - **The key lives in the MCP client's config file** (`claude_desktop_config.json`, `~/.cursor/mcp.json`, etc.) which is in a user-only directory. Same trust model as `~/.ssh/id_rsa`.
 - **Don't paste your key into chat threads or PR descriptions.** If you accidentally do, rotate the key in your CreatorDB account immediately.
 - **One key per person.** Don't share keys across teammates — your credit usage shows up under whoever owns the key.
+
+---
+
+## Claude web / mobile
+
+Claude in the browser (claude.ai) and the mobile apps can't run a local `npx` process, so they connect to the **hosted endpoint** instead. No Node, no install — just add a custom connector:
+
+```
+URL:  https://mcp.creatordb.app/mcp
+Auth: Authorization: Bearer <your CreatorDB V3 API key>
+```
+
+In Claude web: **Settings → Connectors → Add custom connector** → paste the URL → provide your V3 API key as the Bearer token. The same 42 tools appear, identical to the local install.
+
+Notes:
+- Your API key is read per-request and never stored on the server.
+- Health check (no auth): <https://mcp.creatordb.app/health> — returns `{"status":"ok",...}` if the service is up.
+- Same API-key safety rules apply (see above) — your usage is billed to whoever owns the key.
 
 ---
 
