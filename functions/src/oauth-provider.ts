@@ -63,7 +63,7 @@ export function renderAuthorizePage(params: {
       ${hidden('scope', params.scope)}
       ${hidden('resource', params.resource)}
       <label for="api_key">CreatorDB API key</label>
-      <input id="api_key" name="api_key" type="password" autocomplete="off" placeholder="sk-..." required />
+      <input id="api_key" name="api_key" type="password" autocomplete="off" placeholder="your 32-character CreatorDB key" required />
       <button type="submit">Connect</button>
     </form>
     <p class="hint">Don't have a key? Get one at <a href="https://creatordb.app" target="_blank" rel="noopener">creatordb.app</a> or email hello@creatordb.app.</p>

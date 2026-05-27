@@ -42,7 +42,7 @@ The package is published to npm as **`@creatordbai/mcp-server`**. No local clone
 **Claude Code:**
 ```bash
 claude mcp add creatordb -s user \
-  -e CREATORDB_API_KEY=sk-your-key-here \
+  -e CREATORDB_API_KEY=YOUR_CREATORDB_API_KEY \
   -- npx -y @creatordbai/mcp-server
 ```
 
@@ -53,7 +53,7 @@ claude mcp add creatordb -s user \
     "creatordb": {
       "command": "npx",
       "args": ["-y", "@creatordbai/mcp-server"],
-      "env": { "CREATORDB_API_KEY": "sk-your-key-here" }
+      "env": { "CREATORDB_API_KEY": "YOUR_CREATORDB_API_KEY" }
     }
   }
 }
@@ -73,7 +73,7 @@ npm run build
 
 # Then register with Claude Code:
 claude mcp add creatordb -s user \
-  -e CREATORDB_API_KEY=sk-your-key-here \
+  -e CREATORDB_API_KEY=YOUR_CREATORDB_API_KEY \
   -- node "$(pwd)/dist/index.js"
 ```
 
@@ -101,7 +101,7 @@ Drop a `.mcp.json` into a CreatorDB project repo. Anyone who opens that repo in 
 
 `${CREATORDB_API_KEY}` reads from the user's shell environment, so the key stays out of git. Each teammate sets it once in their `.zshrc`/`.bash_profile`:
 ```bash
-export CREATORDB_API_KEY=sk-...
+export CREATORDB_API_KEY=YOUR_CREATORDB_API_KEY
 ```
 
 ## Remote connector (Claude web / mobile)

@@ -33,7 +33,7 @@ This is the simplest path. The package is published publicly to npm as `@creator
 
 ```bash
 claude mcp add creatordb -s user \
-  -e CREATORDB_API_KEY=sk-your-key-here \
+  -e CREATORDB_API_KEY=YOUR_CREATORDB_API_KEY \
   -- npx -y @creatordbai/mcp-server@latest
 ```
 
@@ -45,7 +45,7 @@ claude mcp add creatordb -s user \
     "creatordb": {
       "command": "npx",
       "args": ["-y", "@creatordbai/mcp-server@latest"],
-      "env": { "CREATORDB_API_KEY": "sk-your-key-here" }
+      "env": { "CREATORDB_API_KEY": "YOUR_CREATORDB_API_KEY" }
     }
   }
 }
@@ -55,7 +55,7 @@ If the file already has other MCP servers, just add the `creatordb` entry inside
 
 **Cursor** — edit `~/.cursor/mcp.json` (or use the in-app MCP settings UI). Same JSON shape as Claude Desktop.
 
-**Replace `sk-your-key-here` with your actual CreatorDB API key.** Don't share the key, don't commit it, don't paste it into screenshots.
+**Replace `YOUR_CREATORDB_API_KEY` with your actual CreatorDB API key** (a 32-character string from your CreatorDB account). Don't share the key, don't commit it, don't paste it into screenshots.
 
 ### Method 2 — clone and build locally
 
@@ -68,7 +68,7 @@ npm install
 npm run build
 
 claude mcp add creatordb -s user \
-  -e CREATORDB_API_KEY=sk-your-key-here \
+  -e CREATORDB_API_KEY=YOUR_CREATORDB_API_KEY \
   -- node "$(pwd)/dist/index.js"
 ```
 
