@@ -13,3 +13,5 @@ npm-debug.log*
 .firebase/
 firebase-debug.log
 firebase-debug.*.log
+
+functions/.secret.local
