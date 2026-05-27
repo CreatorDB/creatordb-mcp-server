@@ -67,6 +67,7 @@ export function renderAuthorizePage(params: {
       <button type="submit">Connect</button>
     </form>
     <p class="hint">Don't have a key? Get one at <a href="https://creatordb.app" target="_blank" rel="noopener">creatordb.app</a> or email hello@creatordb.app.</p>
+    <p class="hint">By connecting, you agree to CreatorDB's <a href="https://app.creatordb.app/terms-of-service" target="_blank" rel="noopener">Terms of Service</a> and <a href="https://app.creatordb.app/privacy-policy" target="_blank" rel="noopener">Privacy Policy</a>. Your API key is sent to mcp.creatordb.app only to authenticate your requests — it is encrypted into a session token and not stored.</p>
   </div>
 </body>
 </html>`;

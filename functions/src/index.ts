@@ -92,6 +92,11 @@ function buildApp(secret: string) {
           `<p>Add as a custom connector with URL <code>${RESOURCE}</code>. ` +
           `On connect you'll be asked to paste your CreatorDB V3 API key.</p>` +
           `<p>Docs: <a href="https://github.com/CreatorDB/creatordb-mcp-server">github.com/CreatorDB/creatordb-mcp-server</a></p>` +
+          `<p style="color:#888;font-size:0.85rem">` +
+          `<a href="https://app.creatordb.app/terms-of-service">Terms of Service</a> · ` +
+          `<a href="https://app.creatordb.app/privacy-policy">Privacy Policy</a><br>` +
+          `Your API key is sent to this endpoint only to authenticate your requests — encrypted into a session token, not stored.` +
+          `</p>` +
           `</body></html>`,
       );
   });
