@@ -13,6 +13,9 @@
  * Bearer token; verifyAccessToken falls back to treating it as the key.
  */
 
+import { readFileSync } from 'node:fs';
+import { createRequire } from 'node:module';
+import { dirname, join } from 'node:path';
 import express from 'express';
 import { onRequest } from 'firebase-functions/v2/https';
 import { defineSecret } from 'firebase-functions/params';
@@ -25,7 +28,15 @@ import { registerAllTools } from '@creatordbai/mcp-server/register-tools';
 import { createProvider, mintAuthorizationCode } from './oauth-provider.js';
 
 const SERVER_NAME = 'creatordb';
-const SERVER_VERSION = '1.3.0';
+// Read the bundled @creatordbai/mcp-server's version at runtime so serverInfo
+// stays in sync with whatever package the function was deployed with —
+// instead of drifting against a hardcoded constant.
+const requireFromHere = createRequire(import.meta.url);
+const sdkEntryPath = requireFromHere.resolve('@creatordbai/mcp-server/register-tools');
+const sdkPackageDir = dirname(dirname(sdkEntryPath)); // .../dist/register-tools.js → .../
+const SERVER_VERSION = JSON.parse(
+  readFileSync(join(sdkPackageDir, 'package.json'), 'utf8'),
+).version as string;
 
 const ISSUER = 'https://mcp.creatordb.app';
 const RESOURCE = 'https://mcp.creatordb.app/mcp';
