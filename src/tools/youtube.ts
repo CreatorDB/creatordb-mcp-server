@@ -1,6 +1,6 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
-import { callApi } from '../util/api-client.js';
+import { BASE_URL, callApi } from '../util/api-client.js';
 import { formatToolResult } from '../util/response.js';
 
 const channelIdParam = {
@@ -169,9 +169,11 @@ export function registerYoutubeTools(server: McpServer, apiKey: string) {
 
   server.tool(
     'get_youtube_subtitles_meta',
-    'List available subtitle tracks for a SINGLE YouTube video: language codes, auto-generated ' +
-      'vs human-uploaded. Per-video, not per-channel — pass the videoId of one video at a time. ' +
-      'Use this before calling get_youtube_subtitles_download to know what languages exist. ' +
+    'List available subtitle tracks for a SINGLE YouTube video. Returns ' +
+      '`availableSubtitles: [{ vssId, lang, langCode }]` — e.g. `vssId: "a.en"` for ' +
+      'auto-generated English, `vssId: ".en-US"` for human-uploaded English (US). The `vssId` ' +
+      'is what get_youtube_subtitles_download requires — call this tool first to discover the ' +
+      'vssId of the track you want, then pass that vssId to download. Per-video, not per-channel. ' +
       'Costs 1 credit.',
     {
       videoId: z.string().describe('YouTube video ID (the v= value in a watch URL)'),
@@ -243,23 +245,51 @@ export function registerYoutubeTools(server: McpServer, apiKey: string) {
 
   server.tool(
     'get_youtube_subtitles_download',
-    'Download the subtitle track for a specific YouTube video. Per-video — pass videoId, not ' +
-      'channelId. Costs 3 credits per download.',
+    'Download a specific subtitle track for a YouTube video. Returns an array of ' +
+      '`{ text, start, dur }` entries (seconds). Per-video — pass videoId + vssId. The vssId ' +
+      'identifies which track to download (e.g. "a.en" = auto-generated English; ".en-US" = ' +
+      'human-uploaded English-US). Get valid vssIds from get_youtube_subtitles_meta — call that ' +
+      'first to enumerate tracks for the video. Costs 3 credits per download.',
     {
       videoId: z.string().describe('YouTube video ID (the v= value in a watch URL)'),
-      language: z
+      vssId: z
         .string()
-        .optional()
-        .describe('Subtitle language code (ISO 639-3, e.g. "eng", "jpn"). Defaults to the primary track.'),
+        .describe(
+          'Subtitle track identifier returned by get_youtube_subtitles_meta. Auto-generated ' +
+            'tracks are prefixed with "a." (e.g. "a.en"); human-uploaded tracks start with "." ' +
+            '(e.g. ".en-US").',
+        ),
     },
-    async ({ videoId, language }) => {
-      const params: Record<string, string> = { videoId };
-      if (language) params.language = language;
-      const result = await callApi(apiKey, '/youtube/subtitles/download', {
+    async ({ videoId, vssId }) => {
+      // This endpoint returns a bare JSON array on success (subtitle entries) and the standard
+      // {errorCode, details, ...} envelope on failure — different from every other tool — so we
+      // bypass callApi/formatToolResult and handle both shapes here.
+      const url = new URL('/youtube/subtitles/download', BASE_URL);
+      url.searchParams.set('videoId', videoId);
+      url.searchParams.set('vssId', vssId);
+      const res = await fetch(url, {
         method: 'GET',
-        params,
+        headers: { 'api-key': apiKey, 'Content-Type': 'application/json' },
       });
-      return formatToolResult(result);
+      const body: unknown = await res.json();
+
+      if (Array.isArray(body)) {
+        // Successful download. V3 doesn't include creditsUsed in this response — documented
+        // cost is 3 credits per call; verify via get_api_usage if needed.
+        return {
+          content: [
+            { type: 'text' as const, text: JSON.stringify(body, null, 2) },
+            {
+              type: 'text' as const,
+              text: `Subtitle track downloaded (${body.length} entries). Cost: 3 credits (per V3 docs).`,
+            },
+          ],
+        };
+      }
+
+      // Error envelope path — same shape as the rest of V3, hand to formatToolResult so the
+      // 401 / 400 / 404 / VALIDATION_ERROR / SUBTITLE_VSSID_NOT_FOUND messages look familiar.
+      return formatToolResult(body as Parameters<typeof formatToolResult>[0]);
     },
   );
 }
