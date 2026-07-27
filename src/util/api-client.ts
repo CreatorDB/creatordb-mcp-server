@@ -1,4 +1,4 @@
-export const BASE_URL = 'https://apiv3.creatordb.app';
+export const BASE_URL = process.env.CREATORDB_API_BASE || 'https://apiv3.creatordb.app';
 
 export interface ApiResponse {
   data: unknown;
