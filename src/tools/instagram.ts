@@ -9,6 +9,16 @@ const uniqueIdParam = {
     .describe('Instagram handle (e.g. "natgeo"). No "@" prefix and no URL.'),
 };
 
+const fieldsParam = {
+  fields: z
+    .array(z.string())
+    .optional()
+    .describe(
+      'Fractional Calls: return only these fields to lower the per-call credit cost — ' +
+        'capped so a subset never costs more than the full endpoint. Omit for the full payload.',
+    ),
+};
+
 export function registerInstagramTools(server: McpServer, apiKey: string) {
   server.tool(
     'get_instagram_profile',
@@ -17,11 +27,11 @@ export function registerInstagramTools(server: McpServer, apiKey: string) {
       'linked socials (YouTube/TikTok), hashtags used, account-level categories, and the ' +
       'creator\'s AI-classified `niches`. To browse the full IG niche taxonomy use ' +
       'list_instagram_niches. Costs 2 credits.',
-    uniqueIdParam,
-    async ({ uniqueId }) => {
+    { ...uniqueIdParam, ...fieldsParam },
+    async ({ uniqueId, fields }) => {
       const result = await callApi(apiKey, '/instagram/profile', {
-        method: 'GET',
-        params: { uniqueId },
+        method: 'POST',
+        body: { uniqueId, ...(fields && fields.length ? { fields } : {}) },
       });
       return formatToolResult(result);
     },
@@ -31,11 +41,11 @@ export function registerInstagramTools(server: McpServer, apiKey: string) {
     'get_instagram_contact',
     'Get an Instagram creator\'s contact email addresses (business/public-listed emails). ' +
       'Costs 15 credits.',
-    uniqueIdParam,
-    async ({ uniqueId }) => {
+    { ...uniqueIdParam, ...fieldsParam },
+    async ({ uniqueId, fields }) => {
       const result = await callApi(apiKey, '/instagram/contact', {
-        method: 'GET',
-        params: { uniqueId },
+        method: 'POST',
+        body: { uniqueId, ...(fields && fields.length ? { fields } : {}) },
       });
       return formatToolResult(result);
     },
@@ -50,11 +60,11 @@ export function registerInstagramTools(server: McpServer, apiKey: string) {
       'carries global/country/language percentiles. `recentReelsGrowth.g7/g30/g90` shows ' +
       'engagement-rate trend. `contentCountByDays.7d/30d/90d` shows posting cadence. IG has no ' +
       'all-time window (YouTube-only). Costs 2 credits.',
-    uniqueIdParam,
-    async ({ uniqueId }) => {
+    { ...uniqueIdParam, ...fieldsParam },
+    async ({ uniqueId, fields }) => {
       const result = await callApi(apiKey, '/instagram/performance', {
-        method: 'GET',
-        params: { uniqueId },
+        method: 'POST',
+        body: { uniqueId, ...(fields && fields.length ? { fields } : {}) },
       });
       return formatToolResult(result);
     },
@@ -87,11 +97,11 @@ export function registerInstagramTools(server: McpServer, apiKey: string) {
       '`audienceAgeBreakdown` (fixed 7 buckets: 13-17/18-24/25-34/35-44/45-54/55-64/65+). When ' +
       'data is missing the endpoint returns the placeholder shape (all 0.0) — treat male+female=0 ' +
       'as missing, not "no gender data." Costs 10 credits.',
-    uniqueIdParam,
-    async ({ uniqueId }) => {
+    { ...uniqueIdParam, ...fieldsParam },
+    async ({ uniqueId, fields }) => {
       const result = await callApi(apiKey, '/instagram/audience', {
-        method: 'GET',
-        params: { uniqueId },
+        method: 'POST',
+        body: { uniqueId, ...(fields && fields.length ? { fields } : {}) },
       });
       return formatToolResult(result);
     },
@@ -104,11 +114,11 @@ export function registerInstagramTools(server: McpServer, apiKey: string) {
       '"#"), mentionedCreators (@-mentions), publishTime (Unix-ms), engagementRate. Content from ' +
       'the last 4 days is excluded from metric calculations. Pinned posts >90 days old are ' +
       'excluded if they would be the oldest item. Costs 2 credits.',
-    uniqueIdParam,
-    async ({ uniqueId }) => {
+    { ...uniqueIdParam, ...fieldsParam },
+    async ({ uniqueId, fields }) => {
       const result = await callApi(apiKey, '/instagram/content-detail', {
-        method: 'GET',
-        params: { uniqueId },
+        method: 'POST',
+        body: { uniqueId, ...(fields && fields.length ? { fields } : {}) },
       });
       return formatToolResult(result);
     },
@@ -121,11 +131,11 @@ export function registerInstagramTools(server: McpServer, apiKey: string) {
       'sponsoredVideo carries per-item engagement (same shape as content-detail). CAVEAT: only ' +
       'scans the most recent ~20–30 posts AND only detects brands already indexed — an empty ' +
       'sponsorList is NOT proof the creator has no sponsors. Costs 5 credits.',
-    uniqueIdParam,
-    async ({ uniqueId }) => {
+    { ...uniqueIdParam, ...fieldsParam },
+    async ({ uniqueId, fields }) => {
       const result = await callApi(apiKey, '/instagram/sponsorship', {
-        method: 'GET',
-        params: { uniqueId },
+        method: 'POST',
+        body: { uniqueId, ...(fields && fields.length ? { fields } : {}) },
       });
       return formatToolResult(result);
     },

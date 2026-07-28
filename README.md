@@ -121,6 +121,38 @@ Notes:
 - A health check is available at <https://mcp.creatordb.app/health> (no auth, 0 credits) — returns `{"status":"ok",...}` if the service is up.
 - Visiting <https://mcp.creatordb.app> in a browser shows a short landing page with these same instructions.
 
+## Changing your API key
+
+You don't update a key inside the MCP server — it doesn't store keys. You change it in your client's MCP configuration and restart.
+
+### Local install (Claude Code, Claude Desktop, Cursor)
+
+Edit the same config file you used during setup:
+
+- **Claude Desktop:** `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS) or `%APPDATA%\Claude\claude_desktop_config.json` (Windows)
+- **Cursor:** `~/.cursor/mcp.json` (or the in-app MCP settings UI)
+- **Claude Code:** `~/.mcp.json` or your project's `.mcp.json`
+
+Change the `CREATORDB_API_KEY` value, then **fully restart the client** (⌘Q + reopen for Claude Desktop, restart the Cursor app, etc.). MCP clients only read the key at process startup.
+
+If you set the key from your shell environment (Method C above, with `${CREATORDB_API_KEY}` syntax), update `~/.zshrc` / `~/.bash_profile` and restart your terminal before restarting the client.
+
+### Remote connector (Claude web / mobile / Claude Desktop's "Add custom connector")
+
+In **Settings → Connectors → CreatorDB**, either:
+
+- **Edit the Bearer token** value in the connector's settings, save, and start a new conversation, or
+- **Remove the connector and re-add it** with the new key — most foolproof if the edit-in-place UI is finicky.
+
+### One thing to know about rotating a leaked key
+
+Changing the key on the client side only swaps which key your tools authenticate with. **It does NOT invalidate the previous key.** If you're rotating because the old key was exposed:
+
+1. Go to your CreatorDB account and **revoke the old key** there — that's what actually kills it at the V3 API layer.
+2. Then update the MCP client to use the new key as above.
+
+The MCP server never persists your key past a single request, so there's no server-side "stored key" to purge.
+
 ## Verify it works
 
 After install, restart Claude Code (or your MCP client) and:

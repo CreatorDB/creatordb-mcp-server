@@ -9,6 +9,16 @@ const uniqueIdParam = {
     .describe('TikTok handle (e.g. "charlidamelio"). No "@" prefix and no URL.'),
 };
 
+const fieldsParam = {
+  fields: z
+    .array(z.string())
+    .optional()
+    .describe(
+      'Fractional Calls: return only these fields to lower the per-call credit cost — ' +
+        'capped so a subset never costs more than the full endpoint. Omit for the full payload.',
+    ),
+};
+
 export function registerTiktokTools(server: McpServer, apiKey: string) {
   server.tool(
     'get_tiktok_profile',
@@ -16,11 +26,11 @@ export function registerTiktokTools(server: McpServer, apiKey: string) {
       'country (ISO 3166-1 alpha-3), main language, linked socials, hashtags, and the creator\'s ' +
       'AI-classified `niches`. To browse the full TT niche taxonomy use list_tiktok_niches. ' +
       'Costs 2 credits.',
-    uniqueIdParam,
-    async ({ uniqueId }) => {
+    { ...uniqueIdParam, ...fieldsParam },
+    async ({ uniqueId, fields }) => {
       const result = await callApi(apiKey, '/tiktok/profile', {
-        method: 'GET',
-        params: { uniqueId },
+        method: 'POST',
+        body: { uniqueId, ...(fields && fields.length ? { fields } : {}) },
       });
       return formatToolResult(result);
     },
@@ -29,11 +39,11 @@ export function registerTiktokTools(server: McpServer, apiKey: string) {
   server.tool(
     'get_tiktok_contact',
     'Get a TikTok creator\'s contact email addresses (public-listed). Costs 15 credits.',
-    uniqueIdParam,
-    async ({ uniqueId }) => {
+    { ...uniqueIdParam, ...fieldsParam },
+    async ({ uniqueId, fields }) => {
       const result = await callApi(apiKey, '/tiktok/contact', {
-        method: 'GET',
-        params: { uniqueId },
+        method: 'POST',
+        body: { uniqueId, ...(fields && fields.length ? { fields } : {}) },
       });
       return formatToolResult(result);
     },
@@ -47,11 +57,11 @@ export function registerTiktokTools(server: McpServer, apiKey: string) {
       'low 0–50; requires ≥6 videos). `ranking` block carries global/country/language percentiles. ' +
       '`recentVideosGrowth.g7/g30/g90` shows engagement-rate trend. `contentCountByDays.7d/30d/90d` ' +
       'shows posting cadence. TikTok has no all-time window (YouTube-only). Costs 2 credits.',
-    uniqueIdParam,
-    async ({ uniqueId }) => {
+    { ...uniqueIdParam, ...fieldsParam },
+    async ({ uniqueId, fields }) => {
       const result = await callApi(apiKey, '/tiktok/performance', {
-        method: 'GET',
-        params: { uniqueId },
+        method: 'POST',
+        body: { uniqueId, ...(fields && fields.length ? { fields } : {}) },
       });
       return formatToolResult(result);
     },
@@ -84,11 +94,11 @@ export function registerTiktokTools(server: McpServer, apiKey: string) {
       '`audienceAgeBreakdown` (fixed 7 buckets: 13-17/18-24/25-34/35-44/45-54/55-64/65+). When ' +
       'data is missing the endpoint returns the placeholder shape (all 0.0) — treat male+female=0 ' +
       'as missing. Costs 10 credits.',
-    uniqueIdParam,
-    async ({ uniqueId }) => {
+    { ...uniqueIdParam, ...fieldsParam },
+    async ({ uniqueId, fields }) => {
       const result = await callApi(apiKey, '/tiktok/audience', {
-        method: 'GET',
-        params: { uniqueId },
+        method: 'POST',
+        body: { uniqueId, ...(fields && fields.length ? { fields } : {}) },
       });
       return formatToolResult(result);
     },
@@ -102,11 +112,11 @@ export function registerTiktokTools(server: McpServer, apiKey: string) {
       'and isDuetEnabled — the audio block is the cheapest hook into trending-sound analysis. ' +
       'Content from the last 4 days is excluded from metric calculations. Pinned posts >90 days old ' +
       'are excluded if they would be the oldest item. Costs 2 credits.',
-    uniqueIdParam,
-    async ({ uniqueId }) => {
+    { ...uniqueIdParam, ...fieldsParam },
+    async ({ uniqueId, fields }) => {
       const result = await callApi(apiKey, '/tiktok/content-detail', {
-        method: 'GET',
-        params: { uniqueId },
+        method: 'POST',
+        body: { uniqueId, ...(fields && fields.length ? { fields } : {}) },
       });
       return formatToolResult(result);
     },
