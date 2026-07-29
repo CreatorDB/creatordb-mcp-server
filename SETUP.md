@@ -252,7 +252,7 @@ Auth: Authorization: Bearer <your CreatorDB V3 API key>
 In Claude web: **Settings → Connectors → Add custom connector** → paste the URL → provide your V3 API key as the Bearer token. The same 42 tools appear, identical to the local install.
 
 Notes:
-- Your API key is read per-request and never stored on the server.
+- Your API key is read per-request; this endpoint keeps no separate copy of it. (CreatorDB stores the key itself as the credential it issued you, to validate each request.)
 - Health check (no auth): <https://mcp.creatordb.app/health> — returns `{"status":"ok",...}` if the service is up.
 - Same API-key safety rules apply (see above) — your usage is billed to whoever owns the key.
 

@@ -116,7 +116,7 @@ Auth: Authorization: Bearer <your CreatorDB V3 API key>
 In Claude web: **Settings → Connectors → Add custom connector**, paste the URL, and provide your V3 API key as a Bearer token. The same 42 tools appear.
 
 Notes:
-- The endpoint is stateless — your API key is read per-request from the `Authorization` header and never stored server-side.
+- The endpoint is stateless — your API key is read per-request from the `Authorization` header and this endpoint keeps no separate copy of it. (CreatorDB stores the key itself as the credential it issued you, to validate each request.)
 - Hosted as a Firebase Cloud Function (gen 2) in `asia-northeast1`; source is in [`functions/`](./functions).
 - A health check is available at <https://mcp.creatordb.app/health> (no auth, 0 credits) — returns `{"status":"ok",...}` if the service is up.
 - Visiting <https://mcp.creatordb.app> in a browser shows a short landing page with these same instructions.
