@@ -106,7 +106,7 @@ export function registerSponsorTools(server: McpServer, apiKey: string) {
     'List creators a brand has sponsored (inverse of get_*_sponsorship). Returns each creator ' +
       'with displayName, country, followers, sponsoredContent[] (URLs), topics, niches, ' +
       'sponsoredCount, lastSponsoredDate, avgRecentSponsoredEngagementRate (cross-brand aggregate: ' +
-      'lifetime window on Instagram, R20 window on YouTube). EXPENSIVE: costs 25 credits per page.',
+      'lifetime window on Instagram, R20 window on YouTube). EXPENSIVE: costs 15 credits per page.',
     {
       brandId: z.string().describe('Brand ID (e.g. "acer.com").'),
       platform: platformParam,
@@ -141,7 +141,7 @@ export function registerSponsorTools(server: McpServer, apiKey: string) {
       'sponsored content lifetime, creatorSpecificSponsoredStats = for this brand only) plus ' +
       'estimatedCost / estimatedCreatorCPM (YouTube-only — null for Instagram) and a content[] ' +
       'array with per-item views7d/30d/90d/Lifetime, likes, comments, engagementRate. ' +
-      'EXPENSIVE: costs 25 credits per page.',
+      'EXPENSIVE: costs 15 credits per page.',
     {
       brandId: z.string().describe('Brand ID (e.g. "acer.com").'),
       platform: platformParam,
@@ -176,7 +176,7 @@ export function registerSponsorTools(server: McpServer, apiKey: string) {
       'countries), audienceGender (maleRatio + femaleRatio), audienceAvgAge, audienceAgeBreakdown ' +
       '(fixed 7 buckets: 13-17/18-24/25-34/35-44/45-54/55-64/65+). IG block is reserved but ' +
       'always null today — backend only aggregates YT audience. Omit `platform` to request both. ' +
-      'EXPENSIVE: costs 25 credits.',
+      'EXPENSIVE: costs 15 credits.',
     {
       brandId: z.string().describe('Brand ID (e.g. "acer.com").'),
       platform: platformParam.optional(),
@@ -196,7 +196,7 @@ export function registerSponsorTools(server: McpServer, apiKey: string) {
       'creators block (sponsoredCreators, sponsoredContent30d, top-5 creatorLocationBreakdown, ' +
       'top-5 creatorLanguageBreakdown) and a performance block (estimatedTotalSpend 7d/30d/90d, ' +
       'estimatedCPM30d, estimatedCPE30d, views/likes/comments aggregates, growth30d deltas). ' +
-      'Instagram spend/CPM/CPE always null today. EXPENSIVE: costs 25 credits.',
+      'Instagram spend/CPM/CPE always null today. EXPENSIVE: costs 15 credits.',
     {
       brandId: z.string().describe('Brand ID (e.g. "acer.com").'),
     },

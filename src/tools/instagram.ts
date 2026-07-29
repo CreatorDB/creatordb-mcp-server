@@ -100,7 +100,7 @@ export function registerInstagramTools(server: McpServer, apiKey: string) {
     'get_instagram_performance_history',
     'Get daily metric snapshots (followers, content count, first-page engagement) for an ' +
       'Instagram creator. Returns the `histories` array of timestamped snapshots over the past N ' +
-      'days. Costs 3 credits.',
+      'days. Costs 3–5 credits depending on the requested day range (3 for up to 7 days, rising to 5 for a full 365-day range).',
     {
       ...uniqueIdParam,
       pastDayRange: z
@@ -139,7 +139,7 @@ export function registerInstagramTools(server: McpServer, apiKey: string) {
       'likes, comments, views (reels only — images have no view count), caption, hashtags (with ' +
       '"#"), mentionedCreators (@-mentions), publishTime (Unix-ms), engagementRate. Content from ' +
       'the last 4 days is excluded from metric calculations. Pinned posts >90 days old are ' +
-      'excluded if they would be the oldest item. Costs 2 credits.',
+      'excluded if they would be the oldest item. Costs 3 credits.',
     { ...uniqueIdParam, ...contentDetailFields },
     async ({ uniqueId, fields }) => {
       const result = await callApi(apiKey, '/instagram/content-detail', {
