@@ -16,7 +16,7 @@
     "node": "22"
   },
   "dependencies": {
-    "@creatordbai/mcp-server": "^1.4.1",
+    "@creatordbai/mcp-server": "^1.4.2",
     "@modelcontextprotocol/sdk": "^1.12.1",
     "express": "^5.0.0",
     "firebase-functions": "^6.0.0",
