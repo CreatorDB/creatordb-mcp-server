@@ -51,4 +51,18 @@ async function run([label,path,method,payload]){
 }
 console.log('== MIGRATED (must be POST, expect success) =='); for(const t of migrated) await run(t);
 console.log('\n== CONTROL (still GET) =='); for(const t of controls) await run(t);
-console.log('\n== FRACTIONAL fields (dev has it live) =='); for(const t of fractional) await run(t);
+console.log('\n== FRACTIONAL fields — array shape (dev has it live) =='); for(const t of fractional) await run(t);
+const objFractional = [
+  ['YT content-detail {recentVideos:5}','/youtube/content-detail','POST',{channelId:YT,fields:{recentVideos:5}}],
+  ['IG content-detail {recentReels:5}','/instagram/content-detail','POST',{uniqueId:IG,fields:{recentReels:5}}],
+  ['TT content-detail {recentVideos:5}','/tiktok/content-detail','POST',{uniqueId:TT,fields:{recentVideos:5}}],
+  ['YT sponsorship {sponsorList:5}','/youtube/sponsorship','POST',{channelId:YT,fields:{sponsorList:5}}],
+  ['IG sponsorship {sponsorList:5}','/instagram/sponsorship','POST',{uniqueId:IG,fields:{sponsorList:5}}],
+];
+const submitTests = [
+  ['YT submitCreators','/youtube/submitCreators','POST',{channelIds:[YT]}],
+  ['IG submitCreators','/instagram/submitCreators','POST',{uniqueIds:[IG]}],
+  ['TT submitCreators','/tiktok/submitCreators','POST',{uniqueIds:[TT]}],
+];
+console.log('\n== FRACTIONAL — object shape (content-detail / sponsorship) =='); for(const t of objFractional) await run(t);
+console.log('\n== submitCreators (already-indexed -> done, 0 credits) =='); for(const t of submitTests) await run(t);

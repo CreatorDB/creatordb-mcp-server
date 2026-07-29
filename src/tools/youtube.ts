@@ -13,14 +13,40 @@ const channelIdParam = {
     ),
 };
 
-const fieldsParam = {
-  fields: z
-    .array(z.string())
+const profileFields = {
+  fields: z.array(z.string())
     .optional()
-    .describe(
-      'Fractional Calls: return only these fields to lower the per-call credit cost — ' +
-        'capped so a subset never costs more than the full endpoint. Omit for the full payload.',
-    ),
+    .describe("Fractional Calls — request only the profile fields you need to pay less than the full 2 credits. Each field is 0.1 credit (languages and subscriberGrowth are 0.2), capped at 2. Field names are the response keys (e.g. displayName, country, mainLanguage, totalSubscribers/totalFollowers, bio, isVerified, hasSponsors, hashtags, niches). Example: ['country'] = 0.1; ['displayName','totalSubscribers'] = 0.2. Omit for the full profile (2)."),
+};
+
+const performanceFields = {
+  fields: z.array(z.string())
+    .optional()
+    .describe("Fractional Calls — request only these performance blocks (capped at 2): contentCountByDays (0.2), ranking (0.4), videosPerformanceRecent (1), shortsPerformanceRecent (1), videosPerformanceAll (1), shortsPerformanceAll (1), recentVideosGrowth (0.2), recentShortsGrowth (0.2), videoPrice (0.5), shortsPrice (0.5). Example: ['videoPrice','shortsPrice'] = 1. Omit for the full set (2)."),
+};
+
+const audienceFields = {
+  fields: z.array(z.string())
+    .optional()
+    .describe("Fractional Calls — request only the audience blocks you need (capped at 10): audienceLocations (4), audienceGender (4), audienceAvgAge (2), audienceAgeBreakdown (4). Example: ['audienceGender'] = 4 for gender only (vs 10 for the full bundle). Omit for all four (10)."),
+};
+
+const contactFields = {
+  fields: z.array(z.string())
+    .optional()
+    .describe("This endpoint has one billable field, emails (15) = the full price, so fractional selection yields no savings. Just omit fields."),
+};
+
+const contentDetailFields = {
+  fields: z.object({ recentVideos: z.number().int().positive().optional(), recentShorts: z.number().int().positive().optional() })
+    .optional()
+    .describe("Fractional Calls — an OBJECT mapping content type to the number of items to return, billed 0.1 per item, capped at 3 (~30 items). Keys: recentVideos, recentShorts. Example: { recentVideos: 5 } = 0.5. Omit for the full recent set (3)."),
+};
+
+const sponsorshipFields = {
+  fields: z.object({ sponsorList: z.number().int().positive() })
+    .optional()
+    .describe("Fractional Calls — pass { sponsorList: N } to cap the sponsoring brands returned, billed 0.5 per brand, capped at 5 (~10 brands). Example: { sponsorList: 5 } = 2.5. Omit for the full list (5)."),
 };
 
 export function registerYoutubeTools(server: McpServer, apiKey: string) {
@@ -33,11 +59,11 @@ export function registerYoutubeTools(server: McpServer, apiKey: string) {
       'sponsored `videoPrice` + `shortsPrice` blocks with low/raw/high CPM and dollar bands ' +
       '(YouTube-only — IG/TT do not return pricing). Use list_youtube_topics / list_youtube_niches ' +
       'to resolve topic/niche IDs to human names. Costs 2 credits.',
-    { ...channelIdParam, ...fieldsParam },
+    { ...channelIdParam, ...profileFields },
     async ({ channelId, fields }) => {
       const result = await callApi(apiKey, '/youtube/profile', {
         method: 'POST',
-        body: { channelId, ...(fields && fields.length ? { fields } : {}) },
+        body: { channelId, ...(fields ? { fields } : {}) },
       });
       return formatToolResult(result);
     },
@@ -47,11 +73,11 @@ export function registerYoutubeTools(server: McpServer, apiKey: string) {
     'get_youtube_contact',
     'Get a YouTube creator\'s contact email addresses (channel "for business" + public). ' +
       'Costs 15 credits.',
-    { ...channelIdParam, ...fieldsParam },
+    { ...channelIdParam, ...contactFields },
     async ({ channelId, fields }) => {
       const result = await callApi(apiKey, '/youtube/contact', {
         method: 'POST',
-        body: { channelId, ...(fields && fields.length ? { fields } : {}) },
+        body: { channelId, ...(fields ? { fields } : {}) },
       });
       return formatToolResult(result);
     },
@@ -67,11 +93,11 @@ export function registerYoutubeTools(server: McpServer, apiKey: string) {
       'low 0–50; requires ≥6 content pieces). `ranking` block carries global/country/language ' +
       'percentiles. `recentVideosGrowth.g7/g30/g90` shows engagement-rate trend. ' +
       '`contentCountByDays.7d/30d/90d` shows posting cadence. Costs 2 credits.',
-    { ...channelIdParam, ...fieldsParam },
+    { ...channelIdParam, ...performanceFields },
     async ({ channelId, fields }) => {
       const result = await callApi(apiKey, '/youtube/performance', {
         method: 'POST',
-        body: { channelId, ...(fields && fields.length ? { fields } : {}) },
+        body: { channelId, ...(fields ? { fields } : {}) },
       });
       return formatToolResult(result);
     },
@@ -104,11 +130,11 @@ export function registerYoutubeTools(server: McpServer, apiKey: string) {
       '`audienceAgeBreakdown` (fixed 7 buckets: 13-17/18-24/25-34/35-44/45-54/55-64/65+). When ' +
       'data is missing the endpoint returns the placeholder shape (all 0.0) — treat male+female=0 ' +
       'as missing. Costs 10 credits.',
-    { ...channelIdParam, ...fieldsParam },
+    { ...channelIdParam, ...audienceFields },
     async ({ channelId, fields }) => {
       const result = await callApi(apiKey, '/youtube/audience', {
         method: 'POST',
-        body: { channelId, ...(fields && fields.length ? { fields } : {}) },
+        body: { channelId, ...(fields ? { fields } : {}) },
       });
       return formatToolResult(result);
     },
@@ -120,11 +146,11 @@ export function registerYoutubeTools(server: McpServer, apiKey: string) {
       'likes, comments, length (seconds), isMemberOnly flag (filter for member-only content), ' +
       'hashtags (with "#"), publishTime (Unix-ms), engagementRate. Content from the last 4 days ' +
       'is excluded from metric calculations. Costs 3 credits.',
-    { ...channelIdParam, ...fieldsParam },
+    { ...channelIdParam, ...contentDetailFields },
     async ({ channelId, fields }) => {
       const result = await callApi(apiKey, '/youtube/content-detail', {
         method: 'POST',
-        body: { channelId, ...(fields && fields.length ? { fields } : {}) },
+        body: { channelId, ...(fields ? { fields } : {}) },
       });
       return formatToolResult(result);
     },
@@ -139,11 +165,11 @@ export function registerYoutubeTools(server: McpServer, apiKey: string) {
       'shape as content-detail). CAVEAT: only scans the most recent ~20–30 posts AND only detects ' +
       'brands already indexed in CreatorDB — an empty sponsorList is NOT proof of no sponsorships. ' +
       'Costs 5 credits.',
-    { ...channelIdParam, ...fieldsParam },
+    { ...channelIdParam, ...sponsorshipFields },
     async ({ channelId, fields }) => {
       const result = await callApi(apiKey, '/youtube/sponsorship', {
         method: 'POST',
-        body: { channelId, ...(fields && fields.length ? { fields } : {}) },
+        body: { channelId, ...(fields ? { fields } : {}) },
       });
       return formatToolResult(result);
     },
@@ -300,6 +326,25 @@ export function registerYoutubeTools(server: McpServer, apiKey: string) {
       // Error envelope path — same shape as the rest of V3, hand to formatToolResult so the
       // 401 / 400 / 404 / VALIDATION_ERROR / SUBTITLE_VSSID_NOT_FOUND messages look familiar.
       return formatToolResult(body as Parameters<typeof formatToolResult>[0]);
+    },
+  );
+
+  server.tool(
+    'submit_youtube_creators',
+    'Submit YouTube channels for indexing so they become available in CreatorDB. Returns `results[]`, one entry per submitted id (request order) with `status`: "accepted" (newly queued for scraping — 1 credit each), "done" (already indexed — 0 credits, with `existingChannelId`), or "rejected" (invalid id — 0 credits). Cost = number of accepted × 1 credit; done/rejected are free. Submitted creators enter a processing queue and are NOT immediately available via other tools. Limits: 1–100 ids per call; 1000 ids/day per API key (shared across all platforms).',
+    {
+      channelIds: z
+        .array(z.string())
+        .min(1)
+        .max(100)
+        .describe('YouTube channel IDs in the UC… form (1–100 per call).'),
+    },
+    async ({ channelIds }) => {
+      const result = await callApi(apiKey, '/youtube/submitCreators', {
+        method: 'POST',
+        body: { channelIds },
+      });
+      return formatToolResult(result);
     },
   );
 }
