@@ -1,7 +1,7 @@
 /**
  * Firebase Cloud Function (gen 2) HTTP entry for the CreatorDB MCP server.
  *
- * Serves the same 42 tools as the stdio npm package, over HTTP, so the server
+ * Serves the same 45 tools as the stdio npm package, over HTTP, so the server
  * can be added as a remote connector in Claude web / Claude mobile / any MCP
  * client that doesn't run local subprocesses.
  *
