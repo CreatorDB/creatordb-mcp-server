@@ -106,7 +106,7 @@ function buildApp(secret: string) {
           `<p style="color:#888;font-size:0.85rem">` +
           `<a href="https://app.creatordb.app/terms-of-service">Terms of Service</a> · ` +
           `<a href="https://app.creatordb.app/privacy-policy">Privacy Policy</a><br>` +
-          `Your API key is sent to this endpoint only to authenticate your requests — encrypted into a session token, not stored.` +
+          `Your API key is sent to this endpoint to authenticate your requests — encrypted into a session token; this endpoint keeps no separate copy (CreatorDB stores the key itself as the credential it issued you).` +
           `</p>` +
           `</body></html>`,
       );
