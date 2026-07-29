@@ -54,7 +54,7 @@ export function renderAuthorizePage(params: {
 <body>
   <div class="card">
     <h1>Connect CreatorDB</h1>
-    <p>Paste your CreatorDB V3 API key to authorize this connection. Your key is used only to authenticate your requests — it is never stored on our servers.</p>
+    <p>Paste your CreatorDB V3 API key to authorize this connection. Your key is used to authenticate your requests. This connector keeps no separate copy — it's sealed into an encrypted session token — and CreatorDB stores your key only as the credential it issued you, to validate your requests.</p>
     <form method="POST" action="/authorize/submit">
       ${hidden('client_id', params.clientId)}
       ${hidden('redirect_uri', params.redirectUri)}
@@ -67,7 +67,7 @@ export function renderAuthorizePage(params: {
       <button type="submit">Connect</button>
     </form>
     <p class="hint">Don't have a key? Get one at <a href="https://creatordb.app" target="_blank" rel="noopener">creatordb.app</a> or email hello@creatordb.app.</p>
-    <p class="hint">By connecting, you agree to CreatorDB's <a href="https://app.creatordb.app/terms-of-service" target="_blank" rel="noopener">Terms of Service</a> and <a href="https://app.creatordb.app/privacy-policy" target="_blank" rel="noopener">Privacy Policy</a>. Your API key is sent to mcp.creatordb.app only to authenticate your requests — it is encrypted into a session token and not stored.</p>
+    <p class="hint">By connecting, you agree to CreatorDB's <a href="https://app.creatordb.app/terms-of-service" target="_blank" rel="noopener">Terms of Service</a> and <a href="https://app.creatordb.app/privacy-policy" target="_blank" rel="noopener">Privacy Policy</a>. Your API key is sent to mcp.creatordb.app to authenticate your requests; it's encrypted into a session token and this connector keeps no separate copy (CreatorDB stores the key itself as the credential it issued you).</p>
   </div>
 </body>
 </html>`;

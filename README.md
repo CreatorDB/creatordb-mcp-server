@@ -2,7 +2,7 @@
 
 A [Model Context Protocol](https://modelcontextprotocol.io) server that exposes the [CreatorDB V3 API](https://apiv3.creatordb.app) to any MCP-compatible client (Claude Code, Claude Desktop, Cursor, etc.).
 
-**42 tools across six surfaces:**
+**45 tools across six surfaces:**
 
 - **Creator-side data** — profile, performance, audience demographics, contact, content-detail, performance history for YouTube, Instagram, and TikTok
 - **Creator search** — natural-language search across all three platforms, plus structured filter search per platform (country, language, follower thresholds, niches, hashtags, audience demographics, etc.)
@@ -22,7 +22,7 @@ There are two ways to connect, depending on your client:
 - **Local clients** (Claude Code, Claude Desktop, Cursor) run the server as a subprocess via `npx` — see [Install (local / stdio)](#install-local--stdio).
 - **Web / mobile clients** (Claude web, Claude mobile) can't spawn subprocesses, so they connect to the hosted HTTP endpoint — see [Remote connector (Claude web / mobile)](#remote-connector-claude-web--mobile).
 
-Both expose the same 42 tools. Both need a CreatorDB V3 API key.
+Both expose the same 45 tools. Both need a CreatorDB V3 API key.
 
 1. **Prerequisites**
    - For the local route: Node.js 22 or newer (`node -v` to check)
@@ -113,10 +113,10 @@ URL:  https://mcp.creatordb.app/mcp
 Auth: Authorization: Bearer <your CreatorDB V3 API key>
 ```
 
-In Claude web: **Settings → Connectors → Add custom connector**, paste the URL, and provide your V3 API key as a Bearer token. The same 42 tools appear.
+In Claude web: **Settings → Connectors → Add custom connector**, paste the URL, and provide your V3 API key as a Bearer token. The same 45 tools appear.
 
 Notes:
-- The endpoint is stateless — your API key is read per-request from the `Authorization` header and never stored server-side.
+- The endpoint is stateless — your API key is read per-request from the `Authorization` header and this endpoint keeps no separate copy of it. (CreatorDB stores the key itself as the credential it issued you, to validate each request.)
 - Hosted as a Firebase Cloud Function (gen 2) in `asia-northeast1`; source is in [`functions/`](./functions).
 - A health check is available at <https://mcp.creatordb.app/health> (no auth, 0 credits) — returns `{"status":"ok",...}` if the service is up.
 - Visiting <https://mcp.creatordb.app> in a browser shows a short landing page with these same instructions.
@@ -195,7 +195,7 @@ The workflow validates that the tag matches `package.json` `version`, runs `npm 
 
 ## Tools
 
-42 tools across six categories. Every tool returns a structured JSON payload plus a `Credits used: N | Remaining: M` footer line.
+45 tools across six categories. Every tool returns a structured JSON payload plus a `Credits used: N | Remaining: M` footer line.
 
 ### Account (1)
 

@@ -2,7 +2,7 @@
 
 A 5-minute setup for using CreatorDB's data inside Claude Code, Claude Desktop, or Cursor.
 
-This MCP server exposes **42 tools** that let Claude search the CreatorDB index of YouTube, Instagram, and TikTok creators and pull profile, performance, audience demographics, content, contact, sponsorship, and brand-side data — all from inside an AI conversation. No SaaS UI, no curl, no manual API calls.
+This MCP server exposes **45 tools** that let Claude search the CreatorDB index of YouTube, Instagram, and TikTok creators and pull profile, performance, audience demographics, content, contact, sponsorship, and brand-side data — all from inside an AI conversation. No SaaS UI, no curl, no manual API calls.
 
 ---
 
@@ -91,7 +91,7 @@ Until you do this, your client is running with no knowledge of the new MCP serve
 In any Claude Code or Claude Desktop session, type `/mcp`. You should see:
 
 ```
-creatordb · connected · 42 tools
+creatordb · connected · 45 tools
 ```
 
 If you see `failed` or `connecting…` stuck for more than 10 seconds, jump to Troubleshooting below.
@@ -106,7 +106,7 @@ You should get back display name, subscriber count, country, hashtags, related c
 
 ## What can you do with it?
 
-42 tools across six categories. A non-exhaustive sampler:
+45 tools across six categories. A non-exhaustive sampler:
 
 ### Find creators
 
@@ -176,7 +176,7 @@ Most tools cost 1–5 credits. The exceptions to know:
 
 Use `search_sponsors` / `list_sponsors` / `get_sponsor_information` (1–2 credits each) for cheap brand exploration first; reserve the 25-credit tools for brands you've already shortlisted.
 
-For the full 42-tool reference with response shapes and gotchas, see the main [README on GitHub](https://github.com/CreatorDB/creatordb-mcp-server#tools).
+For the full 45-tool reference with response shapes and gotchas, see the main [README on GitHub](https://github.com/CreatorDB/creatordb-mcp-server#tools).
 
 ---
 
@@ -208,7 +208,7 @@ The three platforms have meaningful differences that the AI sometimes doesn't ca
 | `EACCES: permission denied` from npx | Cache permission issue | `rm -rf ~/.npm/_npx` and restart the client |
 | Network timeout fetching from npm | Behind a corporate proxy | Set `npm config set proxy http://your-proxy:port` |
 | `Error: ENOENT` or `cannot find dist/index.js` (Method 2 only) | Forgot `npm run build` after cloning | `cd` into the repo and run `npm install && npm run build` |
-| Behavior seems wrong but no error | Check `/mcp` to confirm `creatordb` is connected. If it shows fewer than 42 tools, you have an older cached version — see "Upgrading" below |
+| Behavior seems wrong but no error | Check `/mcp` to confirm `creatordb` is connected. If it shows fewer than 45 tools, you have an older cached version — see "Upgrading" below |
 
 If none of these match, send <hello@creatordb.app> a screenshot of `/mcp` output plus the failing message.
 
@@ -249,10 +249,10 @@ URL:  https://mcp.creatordb.app/mcp
 Auth: Authorization: Bearer <your CreatorDB V3 API key>
 ```
 
-In Claude web: **Settings → Connectors → Add custom connector** → paste the URL → provide your V3 API key as the Bearer token. The same 42 tools appear, identical to the local install.
+In Claude web: **Settings → Connectors → Add custom connector** → paste the URL → provide your V3 API key as the Bearer token. The same 45 tools appear, identical to the local install.
 
 Notes:
-- Your API key is read per-request and never stored on the server.
+- Your API key is read per-request; this endpoint keeps no separate copy of it. (CreatorDB stores the key itself as the credential it issued you, to validate each request.)
 - Health check (no auth): <https://mcp.creatordb.app/health> — returns `{"status":"ok",...}` if the service is up.
 - Same API-key safety rules apply (see above) — your usage is billed to whoever owns the key.
 
