@@ -107,7 +107,7 @@ export function registerYoutubeTools(server: McpServer, apiKey: string) {
     'get_youtube_performance_history',
     'Get daily metric snapshots (subscribers, total content count, all-time performance) for a ' +
       'YouTube creator. Returns the `histories` array of timestamped snapshots over the past N ' +
-      'days. Costs 3 credits.',
+      'days. Costs 3–5 credits depending on the requested day range (3 for up to 7 days, rising to 5 for a full 365-day range).',
     {
       ...channelIdParam,
       pastDayRange: z
@@ -237,7 +237,7 @@ export function registerYoutubeTools(server: McpServer, apiKey: string) {
       'views, likes, comments, engagement, isSponsored, partneredBrands, lengthSec, language, ' +
       'category, performanceViews, performanceEngagement. Creator-level filters also supported ' +
       '(creatorDisplayName, country, contentTopics, contentNiches, audienceLocation, etc.). ' +
-      'The 4-day fresh-content exclusion does NOT apply here. Costs 2 credits per page.',
+      'The 4-day fresh-content exclusion does NOT apply here. EXPENSIVE: costs 50 credits per page — or 100 if you pass a `description` filter (it triggers an extra description-table join), so omit that filter unless you need it.',
     {
       filters: z
         .array(

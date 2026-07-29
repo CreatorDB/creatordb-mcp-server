@@ -76,7 +76,7 @@ export function registerTiktokTools(server: McpServer, apiKey: string) {
       '(L+C+Shares)/followers and consistencyScore (0–100; bands: high 81–100, moderate 51–80, ' +
       'low 0–50; requires ≥6 videos). `ranking` block carries global/country/language percentiles. ' +
       '`recentVideosGrowth.g7/g30/g90` shows engagement-rate trend. `contentCountByDays.7d/30d/90d` ' +
-      'shows posting cadence. TikTok has no all-time window (YouTube-only). Costs 2 credits.',
+      'shows posting cadence. TikTok has no all-time window (YouTube-only). Costs 1.5 credits.',
     { ...uniqueIdParam, ...performanceFields },
     async ({ uniqueId, fields }) => {
       const result = await callApi(apiKey, '/tiktok/performance', {
@@ -91,7 +91,7 @@ export function registerTiktokTools(server: McpServer, apiKey: string) {
     'get_tiktok_performance_history',
     'Get daily metric snapshots (followers, content count, recent engagement) for a TikTok ' +
       'creator. Returns the `histories` array of timestamped snapshots over the past N days. ' +
-      'Costs 3 credits.',
+      'Costs 3–5 credits depending on the requested day range (3 for up to 7 days, rising to 5 for a full 365-day range).',
     {
       ...uniqueIdParam,
       pastDayRange: z
@@ -131,7 +131,7 @@ export function registerTiktokTools(server: McpServer, apiKey: string) {
       'Each item also carries TT-only audio metadata (audioId, audioTitle, audioAuthor, audioAlbum) ' +
       'and isDuetEnabled — the audio block is the cheapest hook into trending-sound analysis. ' +
       'Content from the last 4 days is excluded from metric calculations. Pinned posts >90 days old ' +
-      'are excluded if they would be the oldest item. Costs 2 credits.',
+      'are excluded if they would be the oldest item. Costs 3 credits.',
     { ...uniqueIdParam, ...contentDetailFields },
     async ({ uniqueId, fields }) => {
       const result = await callApi(apiKey, '/tiktok/content-detail', {
