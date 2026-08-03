@@ -1,0 +1,34 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "app.creatordb/mcp",
+  "title": "CreatorDB",
+  "description": "Influencer & creator discovery and analytics across YouTube, Instagram, and TikTok (30M+ creators), plus brand/sponsor intelligence: profiles, audience demographics, performance & sponsorship history, natural-language and filter search, AI niches, and contact lookup.",
+  "version": "1.4.2",
+  "websiteUrl": "https://mcp.creatordb.app",
+  "repository": {
+    "url": "https://github.com/CreatorDB/creatordb-mcp-server",
+    "source": "github"
+  },
+  "remotes": [
+    {
+      "type": "streamable-http",
+      "url": "https://mcp.creatordb.app/mcp"
+    }
+  ],
+  "packages": [
+    {
+      "registryType": "npm",
+      "identifier": "@creatordbai/mcp-server",
+      "version": "1.4.2",
+      "transport": { "type": "stdio" },
+      "environmentVariables": [
+        {
+          "name": "CREATORDB_API_KEY",
+          "description": "Your CreatorDB V3 API key (sent as the api-key header). Get one at https://app.creatordb.app.",
+          "isRequired": true,
+          "isSecret": true
+        }
+      ]
+    }
+  ]
+}
