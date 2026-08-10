@@ -5,6 +5,7 @@ import { registerInstagramTools } from './tools/instagram.js';
 import { registerTiktokTools } from './tools/tiktok.js';
 import { registerSponsorTools } from './tools/sponsors.js';
 import { registerAccountTools } from './tools/account.js';
+import { registerResources } from './resources.js';
 import { TOOL_ANNOTATIONS } from './tool-annotations.js';
 
 type ToolFn = McpServer['tool'];
@@ -47,4 +48,7 @@ export function registerAllTools(server: McpServer, apiKey: string): void {
   registerTiktokTools(server, apiKey);
   registerSponsorTools(server, apiKey);
   registerAccountTools(server, apiKey);
+  // Read-only reference resources (no key, 0 credits). Both the stdio package
+  // and the remote connector reach resources through this one call site.
+  registerResources(server);
 }
