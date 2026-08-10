@@ -189,7 +189,8 @@ can budget credits and avoid surprises (e.g. \`search_youtube_content\` costs 50
   as \`creditsUsed\` in that call's response — this table is the estimate.
 - Check your **live balance** any time with \`get_api_usage\` (free, 0 credits).
 - Several tools support **fractional \`fields\`**: request only the fields/blocks you
-  need to pay less than the full price (see per-row notes).
+  need to pay less than the full price (see per-row notes). For the exact
+  per-field / per-block prices, see each tool's \`fields\` parameter.
 - \`{a,b,c}\` in a tool name is shorthand for the per-platform variants.
 
 ${sections}
