@@ -153,10 +153,16 @@ export function registerInstagramTools(server: McpServer, apiKey: string) {
   server.tool(
     'get_instagram_sponsorship',
     'Get an Instagram creator\'s sponsored content grouped by brand. Returns `sponsorList: [{ ' +
-      'brandName, brandId, brandIgIds, sponsoredVideos, sponsoredVideosPerformance }]`. Each ' +
-      'sponsoredVideo carries per-item engagement (same shape as content-detail). CAVEAT: only ' +
-      'scans the most recent ~20–30 posts AND only detects brands already indexed — an empty ' +
-      'sponsorList is NOT proof the creator has no sponsors. Costs 5 credits.',
+      'brandName, brandId, brandIgIds, sponsoredImages, sponsoredReels, ' +
+      'sponsoredImagesPerformance, sponsoredReelsPerformance }]` — note images and reels are ' +
+      'SEPARATE arrays here, unlike YouTube\'s single sponsoredVideos. Each item carries ' +
+      'per-item engagement (same shape as content-detail). DEPTH: unlike YouTube there is no ' +
+      'dedicated sponsored-content store — sponsored items are filtered out of the recent ' +
+      'posts/reels window, so depth is shallower and bounded by that window, not by a fixed ' +
+      'sponsored-item cap. Do NOT assume YouTube\'s 60. An entry may carry an empty brandId/' +
+      'brandName with brandIgIds populated: that is a sponsor detected from the tagged IG ' +
+      'handle but not present in the brand index. An empty sponsorList is NOT proof the ' +
+      'creator has no sponsors. Costs 5 credits.',
     { ...uniqueIdParam, ...sponsorshipFields },
     async ({ uniqueId, fields }) => {
       const result = await callApi(apiKey, '/instagram/sponsorship', {

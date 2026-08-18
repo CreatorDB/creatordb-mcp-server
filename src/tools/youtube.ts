@@ -181,9 +181,13 @@ export function registerYoutubeTools(server: McpServer, apiKey: string) {
       'brandName, brandId, brandIgIds, sponsoredVideos, sponsoredVideosPerformance }]`. ' +
       '`brandIgIds` are the brand\'s Instagram handles — useful to pivot from a sponsored creator ' +
       'back to the brand\'s own IG profile. `sponsoredVideos` carries per-item engagement (same ' +
-      'shape as content-detail). CAVEAT: only scans the most recent ~20–30 posts AND only detects ' +
-      'brands already indexed in CreatorDB — an empty sponsorList is NOT proof of no sponsorships. ' +
-      'Costs 5 credits.',
+      'shape as content-detail). DEPTH: returns up to 60 of the creator\'s most recent ' +
+      'brand-matched sponsored videos (verified live: a high-cadence creator hit exactly 60, ' +
+      'spanning ~108 days). COUNTING: a video with multiple sponsors is repeated under each ' +
+      'brand, so de-duplicate on contentId — summing sponsoredVideos lengths overcounts (105 ' +
+      'entries for 60 unique videos on that creator). CAVEAT: only brands already indexed in ' +
+      'CreatorDB are matched, and unknown-sponsor videos are never returned — an empty ' +
+      'sponsorList is NOT proof of no sponsorships. Costs 5 credits.',
     { ...channelLookupParam, ...sponsorshipFields },
     async ({ channelId, uniqueId, fields }) => {
       const result = await callApi(apiKey, '/youtube/sponsorship', {
