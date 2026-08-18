@@ -153,10 +153,16 @@ export function registerInstagramTools(server: McpServer, apiKey: string) {
   server.tool(
     'get_instagram_sponsorship',
     'Get an Instagram creator\'s sponsored content grouped by brand. Returns `sponsorList: [{ ' +
-      'brandName, brandId, brandIgIds, sponsoredVideos, sponsoredVideosPerformance }]`. Each ' +
-      'sponsoredVideo carries per-item engagement (same shape as content-detail). CAVEAT: only ' +
-      'scans the most recent ~20–30 posts AND only detects brands already indexed — an empty ' +
-      'sponsorList is NOT proof the creator has no sponsors. Costs 5 credits.',
+      'brandName, brandId, brandIgIds, sponsoredImages, sponsoredReels, ' +
+      'sponsoredImagesPerformance, sponsoredReelsPerformance }]` — note images and reels are ' +
+      'SEPARATE arrays here, unlike YouTube\'s single sponsoredVideos. Each item carries ' +
+      'per-item engagement (same shape as content-detail). DEPTH: unlike YouTube there is no ' +
+      'dedicated sponsored-content store — sponsored items are filtered out of the recent ' +
+      'posts/reels window, so depth is shallower and bounded by that window, not by a fixed ' +
+      'sponsored-item cap. Do NOT assume YouTube\'s 60. An entry may carry an empty brandId/' +
+      'brandName with brandIgIds populated: that is a sponsor detected from the tagged IG ' +
+      'handle but not present in the brand index. An empty sponsorList is NOT proof the ' +
+      'creator has no sponsors. Costs 5 credits.',
     { ...uniqueIdParam, ...sponsorshipFields },
     async ({ uniqueId, fields }) => {
       const result = await callApi(apiKey, '/instagram/sponsorship', {
@@ -235,7 +241,7 @@ export function registerInstagramTools(server: McpServer, apiKey: string) {
 
   server.tool(
     'submit_instagram_creators',
-    'Submit Instagram creators for indexing so they become available in CreatorDB. Returns `results[]`, one entry per submitted id (request order) with `status`: "accepted" (newly queued for scraping — 1 credit each), "done" (already indexed — 0 credits, with `existingUniqueId`), or "rejected" (invalid id — 0 credits). Cost = number of accepted × 1 credit; done/rejected are free. Submitted creators enter a processing queue and are NOT immediately available via other tools. Limits: 1–100 ids per call; 1000 ids/day per API key (shared across all platforms).',
+    'Submit Instagram creators for indexing so they become available in CreatorDB. Returns `results[]`, one entry per submitted id (request order) with `status`: "accepted" (newly queued for scraping), "done" (already indexed, with `existingUniqueId`), or "rejected" (invalid id). FREE — 0 credits for every outcome (accepted, done and rejected alike). Submitted creators enter a processing queue and are NOT immediately available via other tools. Limits: 1–100 ids per call; 10,000 ids/day per API key, counted per UTC day and shared across all platforms (429 RATE_LIMIT_EXCEEDED beyond that). Ids here ARE handles — case-insensitive, and a leading "@" is allowed and stripped.',
     {
       uniqueIds: z
         .array(z.string())
