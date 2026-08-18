@@ -10,6 +10,15 @@
  * STALE on several rows (contact, tiktok performance, content-detail) and must
  * NOT be treated as the source — live wins.
  *
+ * RE-VERIFIED 2026-08-17 — the submit rows only. API-308 made creator submission
+ * free and API-309 raised the daily cap 1,000 -> 10,000 (both released
+ * 2026-08-13, after this table was first written). Confirmed live: submitting an
+ * already-indexed channel returned `status: "done"` with `creditsUsed: 0`. The
+ * `accepted` outcome is 0 by construction — `perAcceptedCreator` is the only
+ * multiplier and is now 0 — but was NOT observed, since observing it requires
+ * injecting a real unindexed creator into the scrape queue. Every other row still
+ * carries its 2026-08-10 verification.
+ *
  * The exact charge for any call is ALWAYS returned as `creditsUsed` in the
  * response envelope; this table is the up-front estimate so an agent can budget
  * before spending. Keep it in sync with the "Costs N credits" sentence in each
@@ -17,6 +26,9 @@
  */
 
 export const CREDIT_COSTS_VERIFIED_ON = '2026-08-10';
+
+/** The submit rows were re-verified separately after API-308 / API-309 shipped. */
+export const SUBMIT_REVERIFIED_ON = '2026-08-17';
 
 export interface CreditCostRow {
   /** Section heading the row is grouped under. */
@@ -148,8 +160,8 @@ export const CREDIT_COST_ROWS: CreditCostRow[] = [
   {
     group: 'Submit for indexing',
     tool: 'submit_{youtube,instagram,tiktok}_creators',
-    cost: '1 per accepted id',
-    notes: 'Already-indexed ("done") and invalid ("rejected") ids are free. 1–100 ids/call; 1000 ids/day per API key (shared across all platforms).',
+    cost: '0 (free)',
+    notes: 'Free for every outcome — accepted, already-indexed ("done"), and invalid ("rejected"). Limits still apply: 1–100 ids/call; 10,000 ids/day per API key (one shared counter across all platforms, per UTC day; over-limit returns 429 RATE_LIMIT_EXCEEDED).',
   },
 
   // ── Account ────────────────────────────────────────────────────────────────
@@ -196,8 +208,9 @@ can budget credits and avoid surprises (e.g. \`search_youtube_content\` costs 50
 ${sections}
 
 ---
-_Costs verified against the live CreatorDB V3 API on ${CREDIT_COSTS_VERIFIED_ON}. If a
-call's \`creditsUsed\` ever disagrees with this table, trust \`creditsUsed\` and report
-the drift._
+_Costs verified against the live CreatorDB V3 API on ${CREDIT_COSTS_VERIFIED_ON}; the
+creator-submit rows re-verified ${SUBMIT_REVERIFIED_ON} after submission became free
+(API-308) and the daily cap rose to 10,000 (API-309). If a call's \`creditsUsed\` ever
+disagrees with this table, trust \`creditsUsed\` and report the drift._
 `;
 }
