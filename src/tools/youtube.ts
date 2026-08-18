@@ -354,7 +354,7 @@ export function registerYoutubeTools(server: McpServer, apiKey: string) {
 
   server.tool(
     'submit_youtube_creators',
-    'Submit YouTube channels for indexing so they become available in CreatorDB. Returns `results[]`, one entry per submitted id (request order) with `status`: "accepted" (newly queued for scraping), "done" (already indexed, with `existingChannelId`), or "rejected" (invalid id). FREE — 0 credits for every outcome (accepted, done and rejected alike). Submitted creators enter a processing queue and are NOT immediately available via other tools. Limits: 1–100 ids per call; 10,000 ids/day per API key, counted per UTC day and shared across all platforms (429 RATE_LIMIT_EXCEEDED beyond that). Accepts only immutable ids, NOT @handles or vanity/legacy URLs.',
+    'Submit YouTube channels for indexing so they become available in CreatorDB. Returns `results[]`, one entry per submitted id (request order) with `status`: "accepted" (newly queued for scraping), "done" (already indexed, with `existingChannelId`), or "rejected" (invalid id). FREE — 0 credits for every outcome (accepted, done and rejected alike). Submitted creators enter a processing queue and are NOT immediately available via other tools. Limits: 1–100 ids per call; 10,000 ids/day per API key, counted per UTC day and shared across all platforms (429 RATE_LIMIT_EXCEEDED beyond that). Accepts ONLY the immutable UC channelId (/^UC[A-Za-z0-9_-]{22}$/) — @handles and vanity/legacy URLs are rejected. Unlike Instagram and TikTok submit, which do accept handles.',
     {
       channelIds: z
         .array(z.string())

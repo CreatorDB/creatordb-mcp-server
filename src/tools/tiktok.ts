@@ -215,7 +215,7 @@ export function registerTiktokTools(server: McpServer, apiKey: string) {
 
   server.tool(
     'submit_tiktok_creators',
-    'Submit TikTok creators for indexing so they become available in CreatorDB. Returns `results[]`, one entry per submitted id (request order) with `status`: "accepted" (newly queued for scraping), "done" (already indexed, with `existingUniqueId`), or "rejected" (invalid id). FREE — 0 credits for every outcome (accepted, done and rejected alike). Submitted creators enter a processing queue and are NOT immediately available via other tools. Limits: 1–100 ids per call; 10,000 ids/day per API key, counted per UTC day and shared across all platforms (429 RATE_LIMIT_EXCEEDED beyond that). Accepts only immutable ids, NOT @handles or vanity/legacy URLs.',
+    'Submit TikTok creators for indexing so they become available in CreatorDB. Returns `results[]`, one entry per submitted id (request order) with `status`: "accepted" (newly queued for scraping), "done" (already indexed, with `existingUniqueId`), or "rejected" (invalid id). FREE — 0 credits for every outcome (accepted, done and rejected alike). Submitted creators enter a processing queue and are NOT immediately available via other tools. Limits: 1–100 ids per call; 10,000 ids/day per API key, counted per UTC day and shared across all platforms (429 RATE_LIMIT_EXCEEDED beyond that). Ids here ARE handles — case-insensitive, and a leading "@" is allowed and stripped.',
     {
       uniqueIds: z
         .array(z.string())
