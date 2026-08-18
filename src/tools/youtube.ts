@@ -3,15 +3,34 @@ import { z } from 'zod';
 import { BASE_URL, callApi } from '../util/api-client.js';
 import { formatToolResult } from '../util/response.js';
 
-const channelIdParam = {
+const channelLookupParam = {
   channelId: z
     .string()
+    .optional()
     .describe(
       'YouTube channel ID (the immutable UC… form, e.g. "UCX6OQ3DkcsbYNE6H8uQQuVA"). ' +
-        '"@handle", "/c/vanity", and "/user/legacy" URLs are NOT accepted here — resolve them ' +
-        'to a UC channelId first.',
+        'Provide exactly one of channelId or uniqueId. "/c/vanity" and "/user/legacy" URLs ' +
+        'are NOT accepted — pass the @handle as uniqueId instead.',
+    ),
+  uniqueId: z
+    .string()
+    .optional()
+    .describe(
+      'YouTube channel handle, e.g. "@mrbeast" (the "@" prefix is optional). Provide exactly ' +
+        'one of channelId or uniqueId. Resolves against creators already indexed by CreatorDB — ' +
+        'an unindexed handle returns 404; submit it via submit_youtube_creators (free) first.',
     ),
 };
+
+/**
+ * V3 requires exactly one identifier; fail here rather than sending a 400 to the API.
+ * Returns Record<string, string> so it can spread into both a JSON body and GET params.
+ */
+function ytLookup(channelId?: string, uniqueId?: string): Record<string, string> {
+  if (channelId && !uniqueId) return { channelId };
+  if (uniqueId && !channelId) return { uniqueId };
+  throw new Error('Provide exactly one of channelId or uniqueId.');
+}
 
 const profileFields = {
   fields: z.array(z.string())
@@ -59,11 +78,11 @@ export function registerYoutubeTools(server: McpServer, apiKey: string) {
       'sponsored `videoPrice` + `shortsPrice` blocks with low/raw/high CPM and dollar bands ' +
       '(YouTube-only — IG/TT do not return pricing). Use list_youtube_topics / list_youtube_niches ' +
       'to resolve topic/niche IDs to human names. Costs 2 credits.',
-    { ...channelIdParam, ...profileFields },
-    async ({ channelId, fields }) => {
+    { ...channelLookupParam, ...profileFields },
+    async ({ channelId, uniqueId, fields }) => {
       const result = await callApi(apiKey, '/youtube/profile', {
         method: 'POST',
-        body: { channelId, ...(fields ? { fields } : {}) },
+        body: { ...ytLookup(channelId, uniqueId), ...(fields ? { fields } : {}) },
       });
       return formatToolResult(result);
     },
@@ -73,11 +92,11 @@ export function registerYoutubeTools(server: McpServer, apiKey: string) {
     'get_youtube_contact',
     'Get a YouTube creator\'s contact email addresses (channel "for business" + public). ' +
       'Costs 15 credits.',
-    { ...channelIdParam, ...contactFields },
-    async ({ channelId, fields }) => {
+    { ...channelLookupParam, ...contactFields },
+    async ({ channelId, uniqueId, fields }) => {
       const result = await callApi(apiKey, '/youtube/contact', {
         method: 'POST',
-        body: { channelId, ...(fields ? { fields } : {}) },
+        body: { ...ytLookup(channelId, uniqueId), ...(fields ? { fields } : {}) },
       });
       return formatToolResult(result);
     },
@@ -93,11 +112,11 @@ export function registerYoutubeTools(server: McpServer, apiKey: string) {
       'low 0–50; requires ≥6 content pieces). `ranking` block carries global/country/language ' +
       'percentiles. `recentVideosGrowth.g7/g30/g90` shows engagement-rate trend. ' +
       '`contentCountByDays.7d/30d/90d` shows posting cadence. Costs 2 credits.',
-    { ...channelIdParam, ...performanceFields },
-    async ({ channelId, fields }) => {
+    { ...channelLookupParam, ...performanceFields },
+    async ({ channelId, uniqueId, fields }) => {
       const result = await callApi(apiKey, '/youtube/performance', {
         method: 'POST',
-        body: { channelId, ...(fields ? { fields } : {}) },
+        body: { ...ytLookup(channelId, uniqueId), ...(fields ? { fields } : {}) },
       });
       return formatToolResult(result);
     },
@@ -109,15 +128,15 @@ export function registerYoutubeTools(server: McpServer, apiKey: string) {
       'YouTube creator. Returns the `histories` array of timestamped snapshots over the past N ' +
       'days. Costs 3–5 credits depending on the requested day range (3 for up to 7 days, rising to 5 for a full 365-day range).',
     {
-      ...channelIdParam,
+      ...channelLookupParam,
       pastDayRange: z
         .string()
         .describe('How many past days of daily snapshots to return. String integer, 1–365.'),
     },
-    async ({ channelId, pastDayRange }) => {
+    async ({ channelId, uniqueId, pastDayRange }) => {
       const result = await callApi(apiKey, '/youtube/performance-history', {
         method: 'GET',
-        params: { channelId, pastDayRange },
+        params: { ...ytLookup(channelId, uniqueId), pastDayRange },
       });
       return formatToolResult(result);
     },
@@ -130,11 +149,11 @@ export function registerYoutubeTools(server: McpServer, apiKey: string) {
       '`audienceAgeBreakdown` (fixed 7 buckets: 13-17/18-24/25-34/35-44/45-54/55-64/65+). When ' +
       'data is missing the endpoint returns the placeholder shape (all 0.0) — treat male+female=0 ' +
       'as missing. Costs 10 credits.',
-    { ...channelIdParam, ...audienceFields },
-    async ({ channelId, fields }) => {
+    { ...channelLookupParam, ...audienceFields },
+    async ({ channelId, uniqueId, fields }) => {
       const result = await callApi(apiKey, '/youtube/audience', {
         method: 'POST',
-        body: { channelId, ...(fields ? { fields } : {}) },
+        body: { ...ytLookup(channelId, uniqueId), ...(fields ? { fields } : {}) },
       });
       return formatToolResult(result);
     },
@@ -146,11 +165,11 @@ export function registerYoutubeTools(server: McpServer, apiKey: string) {
       'likes, comments, length (seconds), isMemberOnly flag (filter for member-only content), ' +
       'hashtags (with "#"), publishTime (Unix-ms), engagementRate. Content from the last 4 days ' +
       'is excluded from metric calculations. Costs 3 credits.',
-    { ...channelIdParam, ...contentDetailFields },
-    async ({ channelId, fields }) => {
+    { ...channelLookupParam, ...contentDetailFields },
+    async ({ channelId, uniqueId, fields }) => {
       const result = await callApi(apiKey, '/youtube/content-detail', {
         method: 'POST',
-        body: { channelId, ...(fields ? { fields } : {}) },
+        body: { ...ytLookup(channelId, uniqueId), ...(fields ? { fields } : {}) },
       });
       return formatToolResult(result);
     },
@@ -165,11 +184,11 @@ export function registerYoutubeTools(server: McpServer, apiKey: string) {
       'shape as content-detail). CAVEAT: only scans the most recent ~20–30 posts AND only detects ' +
       'brands already indexed in CreatorDB — an empty sponsorList is NOT proof of no sponsorships. ' +
       'Costs 5 credits.',
-    { ...channelIdParam, ...sponsorshipFields },
-    async ({ channelId, fields }) => {
+    { ...channelLookupParam, ...sponsorshipFields },
+    async ({ channelId, uniqueId, fields }) => {
       const result = await callApi(apiKey, '/youtube/sponsorship', {
         method: 'POST',
-        body: { channelId, ...(fields ? { fields } : {}) },
+        body: { ...ytLookup(channelId, uniqueId), ...(fields ? { fields } : {}) },
       });
       return formatToolResult(result);
     },
