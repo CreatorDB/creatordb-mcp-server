@@ -1,0 +1,45 @@
+name: Disclosure check
+
+# This repository is public: PR titles, bodies and commit messages are permanent
+# public artifacts, and titles feed the generated release notes. The check looks
+# only at those prose surfaces — code and configuration are never scanned, since
+# they legitimately reference infrastructure that prose should not.
+#
+# Logic lives in .github/scripts/check-disclosure.mjs so it can be run locally.
+
+on:
+  pull_request:
+    # `edited` matters: a body rewritten after opening must be re-checked.
+    types: [opened, edited, synchronize, reopened]
+
+permissions:
+  contents: read
+
+jobs:
+  prose:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Collect commit messages
+        id: commits
+        run: |
+          {
+            echo 'messages<<COMMIT_EOF'
+            git log --format='%s%n%b' \
+              '${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}'
+            echo 'COMMIT_EOF'
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Check PR prose
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+          COMMIT_MESSAGES: ${{ steps.commits.outputs.messages }}
+        run: node .github/scripts/check-disclosure.mjs
