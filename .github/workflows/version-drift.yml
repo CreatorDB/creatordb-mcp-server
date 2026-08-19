@@ -1,0 +1,68 @@
+name: Version drift
+
+# Catches the failure mode that left v1.4.3 unreleased for 16 days: the release
+# workflow only fires on a pushed `v*.*.*` tag, so a version bump that is merged
+# but never tagged silently never reaches npm — and the hosted connector, which
+# installs @creatordbai/mcp-server from npm, keeps serving the stale build.
+#
+# This job makes that state visible instead of invisible. It does NOT gate PRs.
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    # Weekly, so drift that starts after the last push still surfaces.
+    - cron: '17 9 * * 1'
+  workflow_dispatch:
+
+jobs:
+  drift:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Compare main / npm / tag / server.json
+        run: |
+          PKG=$(node -p "require('./package.json').version")
+          SRV=$(node -p "require('./server.json').version")
+          NPM=$(npm view @creatordbai/mcp-server version 2>/dev/null || echo "none")
+          TAG=$(git tag -l 'v*.*.*' --sort=-v:refname | head -1)
+          TAG=${TAG#v}
+
+          {
+            echo "| surface | version |"
+            echo "|---|---|"
+            echo "| package.json (main) | $PKG |"
+            echo "| server.json (registry manifest) | $SRV |"
+            echo "| npm latest | $NPM |"
+            echo "| newest git tag | ${TAG:-none} |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          FAIL=0
+
+          if [ "$PKG" != "$NPM" ]; then
+            echo "::error::main is v$PKG but npm latest is v$NPM. Nothing ships until a matching tag is pushed: git tag v$PKG && git push origin v$PKG"
+            FAIL=1
+          fi
+
+          if [ "$PKG" != "$SRV" ]; then
+            echo "::error::package.json ($PKG) and server.json ($SRV) disagree. server.json is the MCP-registry manifest; bump it in the same PR."
+            FAIL=1
+          fi
+
+          if [ "$PKG" != "${TAG:-}" ]; then
+            echo "::warning::No v$PKG tag yet — the release workflow is tag-triggered and will not run without one."
+          fi
+
+          if [ "$FAIL" = "1" ]; then
+            echo "::notice::After publishing, redeploy the connector so the hosted endpoint picks up the new version (functions/package.json pins @creatordbai/mcp-server)."
+            exit 1
+          fi
+
+          echo "All version surfaces agree at v$PKG."
