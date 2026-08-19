@@ -2,7 +2,7 @@
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "app.creatordb/mcp",
   "title": "CreatorDB",
-  "description": "Influencer & creator discovery and analytics across YouTube, Instagram, and TikTok (30M+ creators), plus brand/sponsor intelligence: profiles, audience demographics, performance & sponsorship history, natural-language and filter search, AI niches, and contact lookup.",
+  "description": "Creator discovery & analytics across YouTube, Instagram, TikTok (30M+) + brand/sponsor intel.",
   "version": "1.4.3",
   "websiteUrl": "https://mcp.creatordb.app",
   "repository": {
