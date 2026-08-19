@@ -45,9 +45,35 @@ const searchBodySchema = {
   sortBy: z
     .string()
     .optional()
-    .describe('Field to sort by (e.g. totalSubscribers, totalFollowers, avgEngagementRate).'),
+    .describe(
+      'Field to sort by. OPTIONAL — when omitted this defaults to the platform follower count ' +
+        '(YouTube: totalSubscribers, Instagram/TikTok: totalFollowers) so the most prominent ' +
+        'match ranks first. Without a sort the API returns matches in an arbitrary order, which ' +
+        'buries well-known creators behind small look-alike channels — e.g. a fuzzy displayName ' +
+        'search for "MrBeast" put the 42K-subscriber "MrBeast - Topic" channel first and the real ' +
+        '513M-subscriber channel 21st. Pass an explicit value to override, and use `desc: false` ' +
+        'for ascending. Valid values are PLATFORM-SPECIFIC — common ones: YouTube ' +
+        '`totalSubscribers`, `totalViews`, `subscriberGrowthIn30d`, `avgRecentVideosEngagementRate`, ' +
+        '`platformScore`; Instagram `totalFollowers`, `followerGrowthIn30d`, ' +
+        '`avgRecentReelsEngagementRate`, `platformScore`; TikTok `totalFollowers`, ' +
+        '`followerGrowthIn30d`, `avgRecentVideosEngagementRate`, `platformScore`. Note there is no ' +
+        'bare `avgEngagementRate` field on any platform. An invalid value returns VALIDATION_ERROR ' +
+        'whose message enumerates every accepted field for that platform.',
+    ),
   desc: z.boolean().default(true).describe('Sort descending (true) or ascending (false).'),
 };
+
+/**
+ * Apply the platform's default sort field unless the caller chose one.
+ *
+ * V3 has no relevance ranking on filter matches, so an unsorted search returns
+ * results in an arbitrary order. Defaulting to follower count makes the obvious
+ * match lead; an explicit `sortBy` from the caller always wins, so this only
+ * fills a gap and never overrides intent.
+ */
+function withDefaultSort<T extends { sortBy?: string }>(params: T, defaultSortBy: string): T {
+  return params.sortBy ? params : { ...params, sortBy: defaultSortBy };
+}
 
 export function registerSearchTools(server: McpServer, apiKey: string) {
   // Natural Language Search
@@ -84,12 +110,13 @@ export function registerSearchTools(server: McpServer, apiKey: string) {
       'Use totalSubscribers (NOT totalFollowers) for count thresholds. YT-specific filterable ' +
       'fields: `topics` (coarse ~400-theme taxonomy — IG/TT don\'t have it), `niches` (granular; ' +
       'also on IG/TT but derived separately). Response: `creatorList`, `totalResults`, ' +
-      '`hasNextPage`, `nextOffset` — pass nextOffset as the next request\'s offset to paginate.',
+      '`hasNextPage`, `nextOffset` — pass nextOffset as the next request\'s offset to paginate. ' +
+      'Results are sorted by totalSubscribers (descending) unless you pass your own `sortBy`.',
     searchBodySchema,
     async (params) => {
       const result = await callApi(apiKey, '/youtube/search', {
         method: 'POST',
-        body: params,
+        body: withDefaultSort(params, 'totalSubscribers'),
       });
       return formatToolResult(result);
     },
@@ -101,12 +128,13 @@ export function registerSearchTools(server: McpServer, apiKey: string) {
     'Search Instagram creators using structured filters. Costs 1 credit per 10 filters (max 10). ' +
       'Use totalFollowers (NOT totalSubscribers) for count thresholds. IG has `niches` but NOT ' +
       '`topics` (YouTube-only). Hashtag values need the "#" prefix to match the indexed ' +
-      'hashTagsSearch field. Response: `creatorList`, `totalResults`, `hasNextPage`, `nextOffset`.',
+      'hashTagsSearch field. Response: `creatorList`, `totalResults`, `hasNextPage`, `nextOffset`. ' +
+      'Results are sorted by totalFollowers (descending) unless you pass your own `sortBy`.',
     searchBodySchema,
     async (params) => {
       const result = await callApi(apiKey, '/instagram/search', {
         method: 'POST',
-        body: params,
+        body: withDefaultSort(params, 'totalFollowers'),
       });
       return formatToolResult(result);
     },
@@ -119,12 +147,13 @@ export function registerSearchTools(server: McpServer, apiKey: string) {
       'Use totalFollowers (NOT totalSubscribers) for count thresholds. TT has `niches` but NOT ' +
       '`topics` (YouTube-only). Hashtag values need the "#" prefix. Note: TikTok does not expose ' +
       'a per-brand sponsorship endpoint, so hasSponsors-style filtering is coarser than on YT/IG. ' +
-      'Response: `creatorList`, `totalResults`, `hasNextPage`, `nextOffset`.',
+      'Response: `creatorList`, `totalResults`, `hasNextPage`, `nextOffset`. ' +
+      'Results are sorted by totalFollowers (descending) unless you pass your own `sortBy`.',
     searchBodySchema,
     async (params) => {
       const result = await callApi(apiKey, '/tiktok/search', {
         method: 'POST',
-        body: params,
+        body: withDefaultSort(params, 'totalFollowers'),
       });
       return formatToolResult(result);
     },
