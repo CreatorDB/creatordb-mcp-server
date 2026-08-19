@@ -78,7 +78,7 @@ the package rather than toggling a connector:
 
 1. Make sure your MCP config runs the package with `@latest`, for example:
    `npx -y @creatordbai/mcp-server@latest`
-   (If you pinned a specific version, update it to `1.4.1` or later.)
+   (If you pinned a specific version, update it to `1.5.0` or later.)
 2. **Fully restart your client** (⌘Q and reopen Claude Desktop, restart Cursor, etc.).
    MCP clients only read the package and key at startup.
 
