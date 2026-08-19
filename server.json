@@ -3,7 +3,7 @@
   "name": "app.creatordb/mcp",
   "title": "CreatorDB",
   "description": "Creator discovery & analytics across YouTube, Instagram, TikTok (30M+) + brand/sponsor intel.",
-  "version": "1.4.3",
+  "version": "1.5.0",
   "websiteUrl": "https://mcp.creatordb.app",
   "repository": {
     "url": "https://github.com/CreatorDB/creatordb-mcp-server",
