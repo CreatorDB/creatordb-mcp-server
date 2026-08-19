@@ -398,7 +398,7 @@ NLS response:
 - **`relatedCreators` is unranked** — order is not significance. Don't slice the first N and call them "top related"; sample or rerank by your own metric.
 - **Freshness lag** — `lastDbUpdateTime` is when CreatorDB last refreshed. If it's older than ~14 days, the profile may not reflect recent breakout content.
 - **Niche channelCount drifts** — `list_*_niches` is updated daily; don't cache it longer than that or your "creators in X niche" count will lag reality.
-- **IG `country` is classifier-derived** — unlike YT/TT (which read from self-declared profile fields), Instagram `country` is inferred from content. Treat it as a best-effort signal, not ground truth. Cross-check against `audienceLocations` and bio language when accuracy matters.
+- **IG `country` is modelled, not self-declared** — YouTube and TikTok return the country a creator set on their own profile; for Instagram, CreatorDB's location model supplies it, so IG has country coverage where the profile states nothing.
 
 ## Filter reference (search tools)
 
