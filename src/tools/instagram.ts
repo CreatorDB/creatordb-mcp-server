@@ -2,6 +2,7 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { callApi } from '../util/api-client.js';
 import { formatToolResult } from '../util/response.js';
+import { taxonomyParams, runTaxonomyTool } from '../util/taxonomy-tool.js';
 
 const uniqueIdParam = {
   uniqueId: z
@@ -226,17 +227,19 @@ export function registerInstagramTools(server: McpServer, apiKey: string) {
 
   server.tool(
     'list_instagram_niches',
-    'List the full Instagram NICHE taxonomy used by CreatorDB — every available niche with ' +
-      'channelCount per niche (the response is large: ~10K+ entries). NICHES are granular ' +
-      'subcategories (e.g. "love/All", "fashion/All"). To see which niches a specific creator ' +
-      'is classified under, use get_instagram_profile and read the `niches` field. Per-platform: ' +
-      'IG/YT/TT each have their own niche taxonomy — they are not interchangeable. Instagram does ' +
-      'NOT have a "topics" taxonomy (that is YouTube-only). Takes no parameters. Costs 1 credit.',
-    {},
-    async () => {
-      const result = await callApi(apiKey, '/instagram/niches', { method: 'GET' });
-      return formatToolResult(result);
-    },
+    'Browse or search the Instagram NICHE taxonomy used by CreatorDB (~40,000 entries) with ' +
+      'channelCount per niche. NICHES are granular subcategories (e.g. "love/All", "fashion/All"). ' +
+      'To see which niches a specific creator is classified under, use get_instagram_profile and ' +
+      'read the `niches` field. Per-platform: IG/YT/TT each have their own niche taxonomy — they ' +
+      'are not interchangeable. Instagram does NOT have a "topics" taxonomy (that is ' +
+      'YouTube-only). The Instagram taxonomy is one flat list with no category structure, so ' +
+      'paging through it is rarely useful — pass `search` to resolve a phrase to niche names. ' +
+      'Costs 1 credit per call regardless of page size.',
+    taxonomyParams(
+      'Inert on Instagram: every entry sits in a single "All" category. Present for consistency ' +
+        'with the YouTube taxonomy tools.',
+    ),
+    async (args) => runTaxonomyTool(apiKey, '/instagram/niches', args),
   );
 
   server.tool(

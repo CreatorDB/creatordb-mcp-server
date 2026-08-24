@@ -1,7 +1,7 @@
 {
   "name": "@creatordbai/mcp-server",
-  "version": "1.5.0",
-  "description": "MCP server for CreatorDB V3 API — search and analyze creators across YouTube, Instagram, and TikTok",
+  "version": "1.6.0",
+  "description": "MCP server for CreatorDB V3 API \u2014 search and analyze creators across YouTube, Instagram, and TikTok",
   "type": "module",
   "main": "dist/index.js",
   "exports": {
@@ -16,10 +16,14 @@
     "start": "node dist/index.js",
     "dev": "tsc --watch",
     "prepare": "npm run build",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run build",
+    "test": "npm run build && node --test dist/**/*.test.js"
   },
   "files": [
     "dist",
+    "!dist/**/*.test.js",
+    "!dist/**/*.test.d.ts",
+    "!dist/**/*.test.js.map",
     "README.md",
     "LICENSE"
   ],
