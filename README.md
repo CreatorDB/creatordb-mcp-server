@@ -8,7 +8,7 @@ A [Model Context Protocol](https://modelcontextprotocol.io) server that exposes 
 - **Creator search** — natural-language search across all three platforms, plus structured filter search per platform (country, language, follower thresholds, niches, hashtags, audience demographics, etc.)
 - **Brand-side / sponsor intelligence** *(YouTube + Instagram only — TikTok brand data is not indexed)* — search CreatorDB's 10K+ indexed brands, pull a brand's full profile, list every creator a brand has sponsored, get aggregated audience demographics across a brand's sponsored creator pool, and cross-platform spend / CPM / CPE rollups. The heavier sponsor reads (`get_sponsor_creators`, `get_sponsor_performance`, `get_sponsor_audience`, `get_sponsor_summary`) cost 15 credits each — use deliberately. `get_sponsor_information` is 2, `search_sponsors` 2, `list_sponsors` 1.
 - **Content search** — find individual videos, reels, images, shorts, or TikToks by content-level filters (publish time window, view/like thresholds, hashtags, sponsored-vs-organic, language, niche, etc.). Different from creator search — this returns posts, not channels.
-- **Topic + niche taxonomies** — full catalogs (~470 YT topics, ~14K YT niches, ~10K each on IG/TT) for resolving the per-creator topic/niche IDs returned in profile responses.
+- **Topic + niche taxonomies** — paged, searchable catalogs (~470 YT topics, ~16K YT niches, ~40K each on IG/TT) for resolving the per-creator topic/niche IDs returned in profile responses. Pass `search` to resolve a phrase to entry names rather than paging.
 - **Account** — credit usage broken down by endpoint and platform.
 
 Every tool returns the underlying V3 JSON plus a `Credits used: N | Remaining: M` footer line, so the AI knows exactly what it's spending.
@@ -248,8 +248,8 @@ Creator-key: `channelId` (the UC… form — `@handle` / `/c/` / `/user/` URLs a
 | `get_youtube_audience` | 10 | Age buckets, gender split, top countries. |
 | `get_youtube_content_detail` | 3 | Recent videos + shorts with per-item engagement. |
 | `get_youtube_sponsorship` | 5 | Sponsored content grouped by indexed brand (recent posts only — empty list ≠ "no sponsors"). |
-| `list_youtube_topics` | 1 | The full YT TOPIC taxonomy (~470+ entries with channelCount). **YouTube-only — IG and TT do not have a topic taxonomy.** No parameters. |
-| `list_youtube_niches` | 1 | The full YT NICHE taxonomy (~14K entries with channelCount). No parameters. |
+| `list_youtube_topics` | 1 | The YT TOPIC taxonomy (~470 entries with channelCount), paged. **YouTube-only — IG and TT do not have a topic taxonomy.** `search`, `category`, `minChannelCount`, `pageSize`, `offset`. |
+| `list_youtube_niches` | 1 | The YT NICHE taxonomy (~16K entries with channelCount), paged. `search`, `category`, `minChannelCount`, `pageSize`, `offset`. |
 | `search_youtube_content` | 2 per page | Search individual VIDEOS/SHORTS/STREAMS by content-level filters (different from `search_youtube`, which searches creators). Returns title, publishTime, views, isSponsored, partneredBrands, hashtags + nested creator block. Both content-level and creator-level filters supported. |
 | `get_youtube_subtitles_meta` | 1 | Per-video subtitle track listing. Takes `videoId` (not channelId). |
 | `get_youtube_subtitles_download` | 3 | Subtitle text for one video. Takes `videoId`, optional `language` (ISO 639-3). |
@@ -268,7 +268,7 @@ Creator-key: `uniqueId` (the handle, no `@`).
 | `get_instagram_content_detail` | 2 | Recent images + reels with per-item engagement. |
 | `get_instagram_sponsorship` | 5 | Sponsored content grouped by indexed brand (recent posts only). |
 | `search_instagram_content` | 2 per page | Search individual IMAGES/REELS by content-level filters (different from `search_instagram`, which searches creators). NO views or lengthSec (IG data model). Returns description, publishTime, likes, isSponsored, partneredBrands, hashtags + nested creator block. |
-| `list_instagram_niches` | 1 | The full IG NICHE taxonomy. **Instagram does NOT have a "topics" taxonomy.** No parameters. |
+| `list_instagram_niches` | 1 | The IG NICHE taxonomy (~40K entries), paged. **Instagram does NOT have a "topics" taxonomy.** `search`, `minChannelCount`, `pageSize`, `offset`. |
 
 ### TikTok creator data (7 + 1)
 
@@ -283,7 +283,7 @@ Creator-key: `uniqueId` (the handle, no `@`).
 | `get_tiktok_audience` | 10 | Age buckets, gender split, top countries. |
 | `get_tiktok_content_detail` | 2 | Recent videos with audio metadata, duet/stitch/commerce flags, per-item engagement. |
 | `search_tiktok_content` | 2 per page | Search individual VIDEOS by content-level filters (different from `search_tiktok`, which searches creators). NO isSponsored/partneredBrands (TT brand-attribution not implemented). Filter terminology uses `diggs` but response normalizes to `likes`. |
-| `list_tiktok_niches` | 1 | The full TT NICHE taxonomy. **TikTok does NOT have a topics taxonomy, and does NOT expose a per-brand sponsorship endpoint.** No parameters. |
+| `list_tiktok_niches` | 1 | The TT NICHE taxonomy (~40K entries), paged. **TikTok does NOT have a topics taxonomy, and does NOT expose a per-brand sponsorship endpoint.** `search`, `minChannelCount`, `pageSize`, `offset`. |
 
 ## Cross-platform differences cheat-sheet
 
@@ -398,6 +398,7 @@ NLS response:
 - **`relatedCreators` is unranked** — order is not significance. Don't slice the first N and call them "top related"; sample or rerank by your own metric.
 - **Freshness lag** — `lastDbUpdateTime` is when CreatorDB last refreshed. If it's older than ~14 days, the profile may not reflect recent breakout content.
 - **Niche channelCount drifts** — `list_*_niches` is updated daily; don't cache it longer than that or your "creators in X niche" count will lag reality.
+- **Search the taxonomy, don't page it** — `list_*_niches` returns one page at a time (100 by default, largest first) because the full taxonomies run to ~40,000 entries on Instagram and TikTok. Both are a single flat "All" category with no structure to browse, and the top 100 entries account for only ~18% of creator assignments, so paging rarely gets you anywhere. Pass `search` to resolve a phrase to niche names instead. Matching is whole-word, so `skin` will not find `Skincare`; CamelCase names are split (`StreetFood` matches `street food`) and common variants are folded (`vloggers`→`vlog`, `japanese`→`japan`). On TikTok ~44% of niches have under 100 creators — `minChannelCount` trims that tail.
 - **IG `country` is modelled, not self-declared** — YouTube and TikTok return the country a creator set on their own profile; for Instagram, CreatorDB's location model supplies it, so IG has country coverage where the profile states nothing.
 
 ## Filter reference (search tools)

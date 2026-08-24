@@ -2,6 +2,7 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { callApi } from '../util/api-client.js';
 import { formatToolResult } from '../util/response.js';
+import { taxonomyParams, runTaxonomyTool } from '../util/taxonomy-tool.js';
 
 const uniqueIdParam = {
   uniqueId: z
@@ -199,18 +200,20 @@ export function registerTiktokTools(server: McpServer, apiKey: string) {
 
   server.tool(
     'list_tiktok_niches',
-    'List the full TikTok NICHE taxonomy used by CreatorDB — every available niche with ' +
-      'channelCount per niche (the response is large: ~10K+ entries). NICHES are granular ' +
-      'subcategories (e.g. "Capcut/All", "Dance/All"). To see which niches a specific creator ' +
-      'is classified under, use get_tiktok_profile and read the `niches` field. Per-platform: ' +
-      'TT/YT/IG each have their own niche taxonomy — they are not interchangeable. TikTok does ' +
-      'NOT have a "topics" taxonomy (that is YouTube-only) and does NOT have a per-brand ' +
-      'sponsorship endpoint. Takes no parameters. Costs 1 credit.',
-    {},
-    async () => {
-      const result = await callApi(apiKey, '/tiktok/niches', { method: 'GET' });
-      return formatToolResult(result);
-    },
+    'Browse or search the TikTok NICHE taxonomy used by CreatorDB (~40,000 entries) with ' +
+      'channelCount per niche. NICHES are granular subcategories (e.g. "Capcut/All", "Dance/All"). ' +
+      'To see which niches a specific creator is classified under, use get_tiktok_profile and read ' +
+      'the `niches` field. Per-platform: TT/YT/IG each have their own niche taxonomy — they are ' +
+      'not interchangeable. TikTok does NOT have a "topics" taxonomy (that is YouTube-only) and ' +
+      'does NOT have a per-brand sponsorship endpoint. The TikTok taxonomy is one flat list with ' +
+      'no category structure, so paging through it is rarely useful — pass `search` to resolve a ' +
+      'phrase to niche names. Roughly 44% of entries have fewer than 100 creators, so ' +
+      '`minChannelCount` is often worth setting. Costs 1 credit per call regardless of page size.',
+    taxonomyParams(
+      'Inert on TikTok: every entry sits in a single "All" category. Present for consistency ' +
+        'with the YouTube taxonomy tools.',
+    ),
+    async (args) => runTaxonomyTool(apiKey, '/tiktok/niches', args),
   );
 
   server.tool(

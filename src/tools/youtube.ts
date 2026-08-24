@@ -2,6 +2,7 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { BASE_URL, callApi } from '../util/api-client.js';
 import { formatToolResult } from '../util/response.js';
+import { taxonomyParams, runTaxonomyTool } from '../util/taxonomy-tool.js';
 
 const channelLookupParam = {
   channelId: z
@@ -200,30 +201,36 @@ export function registerYoutubeTools(server: McpServer, apiKey: string) {
 
   server.tool(
     'list_youtube_topics',
-    'List the full YouTube TOPIC taxonomy used by CreatorDB — every available topic (~470+ entries) ' +
-      'with channelCount per topic. TOPICS are a coarse, evolving classification (e.g. "Academic", ' +
-      '"Finance", "Health Education"). YOUTUBE-ONLY: Instagram and TikTok do not have a topic ' +
-      'taxonomy. To see which topics a specific creator is classified under, use get_youtube_profile ' +
-      'and read the `topics` field. Takes no parameters. Costs 1 credit.',
-    {},
-    async () => {
-      const result = await callApi(apiKey, '/youtube/topics', { method: 'GET' });
-      return formatToolResult(result);
-    },
+    'Browse or search the YouTube TOPIC taxonomy used by CreatorDB (~470 entries) with ' +
+      'channelCount per topic. TOPICS are a coarse, evolving classification (e.g. "Academic", ' +
+      '"Finance", "Health Education") spread across 16 categories. YOUTUBE-ONLY: Instagram and ' +
+      'TikTok do not have a topic taxonomy. To see which topics a specific creator is classified ' +
+      'under, use get_youtube_profile and read the `topics` field. Returns one page at a time, ' +
+      'largest topics first — pass `search` to resolve a phrase to topic names, or raise `offset` ' +
+      'to page. Costs 1 credit per call regardless of page size.',
+    taxonomyParams(
+      'Restrict to one of the 16 YouTube categories (e.g. "Gaming", "Music", "Education"). ' +
+        'Matched case-insensitively.',
+    ),
+    async (args) => runTaxonomyTool(apiKey, '/youtube/topics', args),
   );
 
   server.tool(
     'list_youtube_niches',
-    'List the full YouTube NICHE taxonomy used by CreatorDB — every available niche (14000+ entries) ' +
-      'with channelCount per niche. NICHES are granular subcategories (e.g. "Vlog/People Blogs", ' +
-      '"ASMR/People Blogs"). To see which niches a specific creator is classified under, use ' +
-      'get_youtube_profile and read the `niches` field. Per-platform: YT/IG/TT each have their own ' +
-      'niche taxonomy — they are not interchangeable. Takes no parameters. Costs 1 credit.',
-    {},
-    async () => {
-      const result = await callApi(apiKey, '/youtube/niches', { method: 'GET' });
-      return formatToolResult(result);
-    },
+    'Browse or search the YouTube NICHE taxonomy used by CreatorDB (~16,000 entries) with ' +
+      'channelCount per niche. NICHES are granular subcategories (e.g. "Vlog/People Blogs", ' +
+      '"ASMR/People Blogs"), covering the top 1,000 niches in each of 16 categories. To see which ' +
+      'niches a specific creator is classified under, use get_youtube_profile and read the ' +
+      '`niches` field. Per-platform: YT/IG/TT each have their own niche taxonomy — they are not ' +
+      'interchangeable. Returns one page at a time, largest niches first; pass `search` to resolve ' +
+      'a phrase to niche names rather than paging. Around 65% of entries have fewer than 100 ' +
+      'creators, so `minChannelCount` is often worth setting. Costs 1 credit per call regardless ' +
+      'of page size.',
+    taxonomyParams(
+      'Restrict to one of the 16 YouTube categories (e.g. "Gaming", "Science Technology"). ' +
+        'Matched case-insensitively.',
+    ),
+    async (args) => runTaxonomyTool(apiKey, '/youtube/niches', args),
   );
 
   server.tool(
