@@ -14,5 +14,23 @@
       "type": "streamable-http",
       "url": "https://mcp.creatordb.app/mcp"
     }
+  ],
+  "icons": [
+    {
+      "src": "https://mcp.creatordb.app/icon-light.png",
+      "mimeType": "image/png",
+      "sizes": [
+        "512x512"
+      ],
+      "theme": "light"
+    },
+    {
+      "src": "https://mcp.creatordb.app/icon-dark.png",
+      "mimeType": "image/png",
+      "sizes": [
+        "512x512"
+      ],
+      "theme": "dark"
+    }
   ]
 }
