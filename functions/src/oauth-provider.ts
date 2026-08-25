@@ -17,6 +17,30 @@ function escapeHtml(s: string): string {
     .replace(/'/g, '&#39;');
 }
 
+const LOOPBACK_HOSTS = new Set(['localhost', '127.0.0.1', '[::1]', '::1']);
+
+/** OAuth 2.1: a redirect URI must use https, or loopback for native clients. */
+function isAllowedRedirectUri(uri: string): boolean {
+  let u: URL;
+  try {
+    u = new URL(uri);
+  } catch {
+    return false;
+  }
+  if (u.protocol === 'https:') return true;
+  if (u.protocol === 'http:' && LOOPBACK_HOSTS.has(u.hostname)) return true;
+  return false;
+}
+
+/** Host shown to the user on the consent screen, so an unexpected destination is visible. */
+function redirectHost(uri: string): string {
+  try {
+    return new URL(uri).host;
+  } catch {
+    return uri;
+  }
+}
+
 /**
  * Renders the "paste your CreatorDB API key" interstitial. The hidden fields
  * carry the OAuth request parameters through to POST /authorize/submit, which
@@ -43,6 +67,8 @@ export function renderAuthorizePage(params: {
     .card { background: #fff; max-width: 420px; width: 100%; margin: 1rem; padding: 2rem; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
     h1 { font-size: 1.25rem; margin: 0 0 0.25rem; }
     p { color: #555; font-size: 0.9rem; line-height: 1.5; }
+    .dest { margin: 1rem 0 0; padding: 0.7rem 0.8rem; border-radius: 8px; font-size: 0.82rem; line-height: 1.45; background: #f0f4ff; border: 1px solid #d5e0ff; color: #33415c; }
+    .dest code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-weight: 600; }
     label { display: block; font-size: 0.85rem; font-weight: 600; margin: 1.25rem 0 0.4rem; }
     input[type=password] { width: 100%; box-sizing: border-box; padding: 0.6rem 0.7rem; border: 1px solid #d1d5db; border-radius: 8px; font-size: 0.95rem; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
     button { margin-top: 1.25rem; width: 100%; padding: 0.65rem; background: #1a1a1a; color: #fff; border: none; border-radius: 8px; font-size: 0.95rem; font-weight: 600; cursor: pointer; }
@@ -55,6 +81,7 @@ export function renderAuthorizePage(params: {
   <div class="card">
     <h1>Connect CreatorDB</h1>
     <p>Paste your CreatorDB V3 API key to authorize this connection. Your key is used to authenticate your requests. This connector keeps no separate copy — it's sealed into an encrypted session token — and CreatorDB stores your key only as the credential it issued you, to validate your requests.</p>
+    <div class="dest">After you connect, this authorization will be sent to <code>${escapeHtml(redirectHost(params.redirectUri))}</code>. If that isn't the app you're connecting from, close this page and do not enter your key.</div>
     <form method="POST" action="/authorize/submit">
       ${hidden('client_id', params.clientId)}
       ${hidden('redirect_uri', params.redirectUri)}
@@ -108,6 +135,14 @@ export function createProvider(secret: string): OAuthServerProvider {
       }
     },
     async registerClient(client): Promise<OAuthClientInformationFull> {
+      // OAuth 2.1 §7.12 / MCP spec: redirect URIs MUST be https, or loopback
+      // for native clients. Reject anything else at registration time so a
+      // downgraded (plaintext) redirect can never be bound into a client_id.
+      for (const uri of client.redirect_uris ?? []) {
+        if (!isAllowedRedirectUri(uri)) {
+          throw new Error(`Invalid redirect_uri: ${uri} — must be https or a loopback address`);
+        }
+      }
       const clientId = seal(secret, {
         type: 'client',
         redirect_uris: client.redirect_uris,
