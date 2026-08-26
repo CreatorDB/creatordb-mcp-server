@@ -112,7 +112,7 @@ export function registerYoutubeTools(server: McpServer, apiKey: string) {
       '(L+C+V)/subscribers and consistencyScore (0–100; bands: high 81–100, moderate 51–80, ' +
       'low 0–50; requires ≥6 content pieces). `ranking` block carries global/country/language ' +
       'percentiles. `recentVideosGrowth.g7/g30/g90` shows engagement-rate trend. ' +
-      '`contentCountByDays.7d/30d/90d` shows posting cadence. Costs 2 credits.',
+      '`contentCountByDays.7d/30d/90d` shows posting cadence. Costs 3 credits.',
     { ...channelLookupParam, ...performanceFields },
     async ({ channelId, uniqueId, fields }) => {
       const result = await callApi(apiKey, '/youtube/performance', {
