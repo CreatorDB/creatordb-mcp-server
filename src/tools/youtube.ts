@@ -261,8 +261,8 @@ export function registerYoutubeTools(server: McpServer, apiKey: string) {
       'contentType (video|shorts|stream), title, description, thumbnail, url, publishTime ' +
       '(Unix-ms), lengthSec, isSponsored, partneredBrands[], views/likes/comments/engagementRate, ' +
       'hashtags, language, category, and a nested creator block. Plus totalResults, hasNextPage, ' +
-      'nextOffset for pagination. Content-level filterable fields: postType, title, description ' +
-      '(NOTE: description filter is currently deferred — returns 400), hashtag, publishTime ' +
+      'nextOffset for pagination. Content-level filterable fields: postType, title, description, ' +
+      'hashtag, publishTime ' +
       '(filter value is integer "days ago", not Unix-ms — semantic split with the response field), ' +
       'views, likes, comments, engagement, isSponsored, partneredBrands, lengthSec, language, ' +
       'category, performanceViews, performanceEngagement. Creator-level filters also supported ' +
