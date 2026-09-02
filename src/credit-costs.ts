@@ -61,7 +61,7 @@ export const CREDIT_COST_ROWS: CreditCostRow[] = [
     group: 'Content search (individual posts)',
     tool: 'search_youtube_content',
     cost: '50 / page',
-    notes: 'EXPENSIVE. A `description` filter would add a join (→100/page), but that filter is currently deferred (returns 400) — so 50 is the effective cost today.',
+    notes: 'EXPENSIVE — 50/page, or 100/page if you pass a `description` filter (it triggers a description-table join). Omit that filter unless you need it.',
   },
   {
     group: 'Content search (individual posts)',
