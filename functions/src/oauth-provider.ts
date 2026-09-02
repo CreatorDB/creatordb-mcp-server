@@ -63,10 +63,10 @@ export function renderAuthorizePage(params: {
       ${hidden('scope', params.scope)}
       ${hidden('resource', params.resource)}
       <label for="api_key">CreatorDB API key</label>
-      <input id="api_key" name="api_key" type="password" autocomplete="off" placeholder="your 32-character CreatorDB key" required />
+      <input id="api_key" name="api_key" type="password" autocomplete="off" placeholder="your CreatorDB key" required />
       <button type="submit">Connect</button>
     </form>
-    <p class="hint">Don't have a key? Get one at <a href="https://creatordb.app" target="_blank" rel="noopener">creatordb.app</a> or email hello@creatordb.app.</p>
+    <p class="hint">Don't have a key? Get one at <a href="https://app.creatordb.app" target="_blank" rel="noopener">app.creatordb.app</a> or email hello@creatordb.app to talk to our sales team.</p>
     <p class="hint">By connecting, you agree to CreatorDB's <a href="https://app.creatordb.app/terms-of-service" target="_blank" rel="noopener">Terms of Service</a> and <a href="https://app.creatordb.app/privacy-policy" target="_blank" rel="noopener">Privacy Policy</a>. Your API key is sent to mcp.creatordb.app to authenticate your requests; it's encrypted into a session token and this connector keeps no separate copy (CreatorDB stores the key itself as the credential it issued you).</p>
   </div>
 </body>
