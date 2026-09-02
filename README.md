@@ -20,7 +20,7 @@ Every tool returns the underlying V3 JSON plus a `Credits used: N | Remaining: M
 There are two ways to connect, depending on your client:
 
 - **Local clients** (Claude Code, Claude Desktop, Cursor) run the server as a subprocess via `npx` — see [Install (local / stdio)](#install-local--stdio).
-- **Web / mobile clients** (Claude web, Claude mobile) can't spawn subprocesses, so they connect to the hosted HTTP endpoint — see [Remote connector (Claude web / mobile)](#remote-connector-claude-web--mobile).
+- **Web / desktop / mobile clients** connect to the hosted endpoint, or add CreatorDB straight from Claude's connector directory — see [Remote connector](#remote-connector-claude-web-desktop-mobile).
 
 Both expose the same 45 tools. Both need a CreatorDB V3 API key.
 
@@ -104,22 +104,28 @@ Drop a `.mcp.json` into a CreatorDB project repo. Anyone who opens that repo in 
 export CREATORDB_API_KEY=YOUR_CREATORDB_API_KEY
 ```
 
-## Remote connector (Claude web / mobile)
+## Remote connector (Claude web, desktop, mobile)
 
-Claude in the browser and the mobile apps can't spawn local subprocesses, so they connect to the **hosted HTTP endpoint** instead of running `npx`:
+Claude clients that can't spawn a local subprocess connect to the hosted endpoint instead of running `npx`. There are two ways in.
+
+**From the connector directory (easiest).** CreatorDB is listed in Claude's connector directory. In Claude: **Settings → Connectors → Add → Browse connectors**, search **CreatorDB**, open **CreatorDB MCP**, and click **Connect to Claude**.
+
+**Add it manually.** You can also add it directly: **Settings → Connectors → Add → Add custom connector**, and enter the URL:
 
 ```
-URL:  https://mcp.creatordb.app/mcp
-Auth: Authorization: Bearer <your CreatorDB V3 API key>
+https://mcp.creatordb.app/mcp
 ```
 
-In Claude web: **Settings → Connectors → Add custom connector**, paste the URL, and provide your V3 API key as a Bearer token. The same 45 tools appear.
+Leave the Advanced OAuth Client ID / Secret fields empty — the server registers the client automatically.
+
+Either way, when you connect you're taken to a CreatorDB page to paste your V3 API key, and the same 45 tools appear.
 
 Notes:
-- The endpoint is stateless — your API key is read per-request from the `Authorization` header and this endpoint keeps no separate copy of it. (CreatorDB stores the key itself as the credential it issued you, to validate each request.)
+- You authorize by pasting your key on the CreatorDB page; the connector seals it into an encrypted session token and keeps no separate copy. CreatorDB stores the key only as the credential it issued you.
+- Programmatic clients calling the endpoint directly can instead send `Authorization: Bearer <your CreatorDB V3 API key>`.
+- Health check: <https://mcp.creatordb.app/health> (no auth, 0 credits) — returns `{"status":"ok",...}` when the service is up.
 - Hosted as a Firebase Cloud Function (gen 2) in `asia-northeast1`; source is in [`functions/`](./functions).
-- A health check is available at <https://mcp.creatordb.app/health> (no auth, 0 credits) — returns `{"status":"ok",...}` if the service is up.
-- Visiting <https://mcp.creatordb.app> in a browser shows a short landing page with these same instructions.
+- Don't have a key? Get one at <https://app.creatordb.app> or email hello@creatordb.app.
 
 ## Changing your API key
 
@@ -137,12 +143,9 @@ Change the `CREATORDB_API_KEY` value, then **fully restart the client** (⌘Q + 
 
 If you set the key from your shell environment (Method C above, with `${CREATORDB_API_KEY}` syntax), update `~/.zshrc` / `~/.bash_profile` and restart your terminal before restarting the client.
 
-### Remote connector (Claude web / mobile / Claude Desktop's "Add custom connector")
+### Remote connector (Claude web, desktop, mobile)
 
-In **Settings → Connectors → CreatorDB**, either:
-
-- **Edit the Bearer token** value in the connector's settings, save, and start a new conversation, or
-- **Remove the connector and re-add it** with the new key — most foolproof if the edit-in-place UI is finicky.
+In **Settings → Connectors → CreatorDB**, disconnect and reconnect, then paste the new key on the CreatorDB page. (A programmatic client sending a Bearer token just starts sending the new key.)
 
 ### One thing to know about rotating a leaked key
 
