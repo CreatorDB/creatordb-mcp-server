@@ -118,10 +118,10 @@ https://mcp.creatordb.app/mcp
 
 Leave the Advanced OAuth Client ID / Secret fields empty — the server registers the client automatically.
 
-Either way, when you connect you're taken to a CreatorDB page to paste your V3 API key, and the same 45 tools appear.
+Either way, you'll be prompted to enter your CreatorDB API key when you connect, and the same 45 tools appear.
 
 Notes:
-- You authorize by pasting your key on the CreatorDB page; the connector seals it into an encrypted session token and keeps no separate copy. CreatorDB stores the key only as the credential it issued you.
+- You'll be prompted to enter your key when you connect; the connector seals it into an encrypted session token and keeps no separate copy. CreatorDB stores the key only as the credential it issued you.
 - Programmatic clients calling the endpoint directly can instead send `Authorization: Bearer <your CreatorDB V3 API key>`.
 - Health check: <https://mcp.creatordb.app/health> (no auth, 0 credits) — returns `{"status":"ok",...}` when the service is up.
 - Hosted as a Firebase Cloud Function (gen 2) in `asia-northeast1`; source is in [`functions/`](./functions).
@@ -145,7 +145,7 @@ If you set the key from your shell environment (Method C above, with `${CREATORD
 
 ### Remote connector (Claude web, desktop, mobile)
 
-In **Settings → Connectors → CreatorDB**, disconnect and reconnect, then paste the new key on the CreatorDB page. (A programmatic client sending a Bearer token just starts sending the new key.)
+In **Settings → Connectors → CreatorDB**, disconnect and reconnect, then enter the new key when prompted. (A programmatic client sending a Bearer token just starts sending the new key.)
 
 ### One thing to know about rotating a leaked key
 
