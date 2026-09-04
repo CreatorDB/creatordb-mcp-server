@@ -174,6 +174,11 @@ export const mcp = onRequest(
     cors: true,
     timeoutSeconds: 60,
     memory: '512MiB',
+    // The connector is an I/O-bound proxy (forwards to V3), so it doesn't need
+    // the full 1 vCPU the 512MiB tier defaults to. Half a vCPU keeps the warm
+    // instance's standing cost down (~$10/mo -> ~$6-7/mo) with no impact at this
+    // volume; the handshake still completes in well under a second warm.
+    cpu: 0.5,
     // One always-warm instance: the connector is bursty (~430 calls/day), so
     // without this it cold-starts often, and a cold handshake (8-13s vs ~0.35s
     // warm) times out the client -> McpConnectionError -> the user disconnects.
