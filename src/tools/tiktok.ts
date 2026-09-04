@@ -2,12 +2,14 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { callApi } from '../util/api-client.js';
 import { formatToolResult } from '../util/response.js';
+import { normalizeHandle } from '../util/handle.js';
 import { taxonomyParams, runTaxonomyTool } from '../util/taxonomy-tool.js';
 
 const uniqueIdParam = {
   uniqueId: z
     .string()
-    .describe('TikTok handle (e.g. "charlidamelio"). No "@" prefix and no URL.'),
+    .describe('TikTok handle (e.g. "charlidamelio"). A leading "@", different casing, or a full profile URL are accepted and normalised.')
+    .transform(normalizeHandle),
 };
 
 const profileFields = {

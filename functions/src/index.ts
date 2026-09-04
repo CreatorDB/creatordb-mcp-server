@@ -174,6 +174,11 @@ export const mcp = onRequest(
     cors: true,
     timeoutSeconds: 60,
     memory: '512MiB',
+    // One always-warm instance: the connector is bursty (~430 calls/day), so
+    // without this it cold-starts often, and a cold handshake (8-13s vs ~0.35s
+    // warm) times out the client -> McpConnectionError -> the user disconnects.
+    // That drove the directory 'Degraded' health (12.7% disconnect rate).
+    minInstances: 1,
     maxInstances: 100,
     invoker: 'public',
     secrets: [oauthSecret],
