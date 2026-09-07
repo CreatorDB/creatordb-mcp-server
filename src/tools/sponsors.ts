@@ -3,6 +3,18 @@ import { z } from 'zod';
 import { callApi } from '../util/api-client.js';
 import { formatToolResult } from '../util/response.js';
 
+// A brandId is CreatorDB's identifier for a brand — its primary domain, NOT a
+// brand name. Agents that pass a name ("Nike") instead of an id ("nike.com")
+// were the top driver of sponsor-tool NOT_FOUND errors, so the description
+// steers them to resolve names via search_sponsors first.
+const brandIdSchema = z
+  .string()
+  .describe(
+    'A CreatorDB brandId — the brand\'s primary domain, e.g. "nike.com". This is NOT a brand ' +
+      'name. Obtain it from search_sponsors or list_sponsors. If you only have a brand name ' +
+      '(e.g. "Nike"), call search_sponsors first to resolve it to a brandId, then pass that here.',
+  );
+
 const filterSchema = z.object({
   filterName: z
     .string()
@@ -88,9 +100,7 @@ export function registerSponsorTools(server: McpServer, apiKey: string) {
       'keyPeople[], industries[], country, location, website, socialMedia[] (with platform-tagged ' +
       'URLs), competitors[], totalSponsoredContent, sponsoringPlatforms. Costs 2 credits.',
     {
-      brandId: z
-        .string()
-        .describe('Brand ID (typically the brand\'s primary domain, e.g. "acer.com", "nike.com").'),
+      brandId: brandIdSchema,
     },
     async ({ brandId }) => {
       const result = await callApi(apiKey, '/sponsor/information', {
@@ -108,7 +118,7 @@ export function registerSponsorTools(server: McpServer, apiKey: string) {
       'sponsoredCount, lastSponsoredDate, avgRecentSponsoredEngagementRate (cross-brand aggregate: ' +
       'lifetime window on Instagram, R20 window on YouTube). EXPENSIVE: costs 15 credits per page.',
     {
-      brandId: z.string().describe('Brand ID (e.g. "acer.com").'),
+      brandId: brandIdSchema,
       platform: platformParam,
       pageSize: z.number().min(1).max(100).default(50).describe('Results per page (max 100).'),
       offset: z.number().min(0).default(0).describe('Number of records to skip for pagination.'),
@@ -143,7 +153,7 @@ export function registerSponsorTools(server: McpServer, apiKey: string) {
       'array with per-item views7d/30d/90d/Lifetime, likes, comments, engagementRate. ' +
       'EXPENSIVE: costs 15 credits per page.',
     {
-      brandId: z.string().describe('Brand ID (e.g. "acer.com").'),
+      brandId: brandIdSchema,
       platform: platformParam,
       pageSize: z.number().min(1).max(100).default(50).describe('Results per page (max 100).'),
       offset: z.number().min(0).default(0).describe('Number of records to skip for pagination.'),
@@ -178,7 +188,7 @@ export function registerSponsorTools(server: McpServer, apiKey: string) {
       'always null today — backend only aggregates YT audience. Omit `platform` to request both. ' +
       'EXPENSIVE: costs 15 credits.',
     {
-      brandId: z.string().describe('Brand ID (e.g. "acer.com").'),
+      brandId: brandIdSchema,
       platform: platformParam.optional(),
     },
     async ({ brandId, platform }) => {
@@ -198,7 +208,7 @@ export function registerSponsorTools(server: McpServer, apiKey: string) {
       'estimatedCPM30d, estimatedCPE30d, views/likes/comments aggregates, growth30d deltas). ' +
       'Instagram spend/CPM/CPE always null today. EXPENSIVE: costs 15 credits.',
     {
-      brandId: z.string().describe('Brand ID (e.g. "acer.com").'),
+      brandId: brandIdSchema,
     },
     async ({ brandId }) => {
       const result = await callApi(apiKey, '/sponsor/summary', { method: 'GET', params: { brandId } });
