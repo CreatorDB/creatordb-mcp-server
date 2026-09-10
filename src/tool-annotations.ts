@@ -42,7 +42,6 @@ export const TOOL_ANNOTATIONS: Record<string, ToolAnnotations> = {
   get_instagram_content_detail: read('Get Instagram Content Detail'),
   get_instagram_sponsorship: read('Get Instagram Sponsorships'),
   search_instagram: read('Search Instagram Creators'),
-  search_instagram_content: read('Search Instagram Content'),
   list_instagram_niches: read('List Instagram Niches'),
   submit_instagram_creators: submit('Submit Instagram Creators for Indexing'),
 
@@ -69,7 +68,6 @@ export const TOOL_ANNOTATIONS: Record<string, ToolAnnotations> = {
   get_youtube_subtitles_meta: read('Get YouTube Subtitle Metadata'),
   get_youtube_subtitles_download: read('Download YouTube Subtitles'),
   search_youtube: read('Search YouTube Creators'),
-  search_youtube_content: read('Search YouTube Content'),
   list_youtube_niches: read('List YouTube Niches'),
   list_youtube_topics: read('List YouTube Topics'),
   submit_youtube_creators: submit('Submit YouTube Creators for Indexing'),

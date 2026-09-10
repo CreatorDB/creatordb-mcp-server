@@ -109,7 +109,7 @@ export function registerYoutubeTools(server: McpServer, apiKey: string) {
       'videosPerformanceRecent + shortsPerformanceRecent (R20: last 20 of each) and ' +
       'videosPerformanceAll + shortsPerformanceAll (up to 800). Each has avg/median/min/max/' +
       'percentile25/percentile75/iqr for likes/comments/views, plus an engagement block with ' +
-      '(L+C+V)/subscribers and consistencyScore (0–100; bands: high 81–100, moderate 51–80, ' +
+      '(likes + comments) / views and consistencyScore (0–100; bands: high 81–100, moderate 51–80, ' +
       'low 0–50; requires ≥6 content pieces). `ranking` block carries global/country/language ' +
       'percentiles. `recentVideosGrowth.g7/g30/g90` shows engagement-rate trend. ' +
       '`contentCountByDays.7d/30d/90d` shows posting cadence. Costs 2 credits.',
@@ -248,62 +248,6 @@ export function registerYoutubeTools(server: McpServer, apiKey: string) {
       const result = await callApi(apiKey, '/youtube/subtitles/meta', {
         method: 'GET',
         params: { videoId },
-      });
-      return formatToolResult(result);
-    },
-  );
-
-  server.tool(
-    'search_youtube_content',
-    'Search individual YouTube content (videos, shorts, streams) across CreatorDB\'s index. ' +
-      'Different from search_youtube (which searches CREATORS) — this returns individual posts ' +
-      'matching content-level filters. Response includes `contentList[]` with contentId, ' +
-      'contentType (video|shorts|stream), title, description, thumbnail, url, publishTime ' +
-      '(Unix-ms), lengthSec, isSponsored, partneredBrands[], views/likes/comments/engagementRate, ' +
-      'hashtags, language, category, and a nested creator block. Plus totalResults, hasNextPage, ' +
-      'nextOffset for pagination. Content-level filterable fields: postType, title, description ' +
-      '(NOTE: description filter is currently deferred — returns 400), hashtag, publishTime ' +
-      '(filter value is integer "days ago", not Unix-ms — semantic split with the response field), ' +
-      'views, likes, comments, engagement, isSponsored, partneredBrands, lengthSec, language, ' +
-      'category, performanceViews, performanceEngagement. Creator-level filters also supported ' +
-      '(creatorDisplayName, country, contentTopics, contentNiches, audienceLocation, etc.). ' +
-      'The 4-day fresh-content exclusion does NOT apply here. EXPENSIVE: costs 50 credits per page — or 100 if you pass a `description` filter (it triggers an extra description-table join), so omit that filter unless you need it.',
-    {
-      filters: z
-        .array(
-          z.object({
-            filterName: z.string().describe('Field to filter on. See description for full list.'),
-            op: z.enum(['>', '=', '<', 'in']).describe('Comparison operator.'),
-            value: z
-              .union([z.string(), z.number(), z.boolean(), z.array(z.string()).max(100)])
-              .describe('Filter value (type must match the field).'),
-            isFuzzySearch: z.boolean().default(false).describe('Fuzzy matching for string fields.'),
-          }),
-        )
-        .min(1)
-        .max(10)
-        .describe('Content filters (1–10).'),
-      pageSize: z.number().min(1).max(100).default(20).describe('Results per page (max 100).'),
-      offset: z.number().min(0).default(0).describe('Number of records to skip for pagination.'),
-      sortBy: z
-        .enum([
-          'publishTime',
-          'views',
-          'likes',
-          'comments',
-          'engagement',
-          'lengthSec',
-          'performanceViews',
-          'performanceEngagement',
-        ])
-        .default('publishTime')
-        .describe('Sort field.'),
-      desc: z.boolean().default(true).describe('Sort descending (true) or ascending (false).'),
-    },
-    async (params) => {
-      const result = await callApi(apiKey, '/youtube/content-search', {
-        method: 'POST',
-        body: params,
       });
       return formatToolResult(result);
     },

@@ -76,7 +76,7 @@ export function registerTiktokTools(server: McpServer, apiKey: string) {
     'get_tiktok_performance',
     'Get a TikTok creator\'s engagement metrics on recent videos. Returns videosPerformanceRecent ' +
       'with avg/median/min/max views, likes, comments, shares, plus an engagement block using ' +
-      '(L+C+Shares)/followers and consistencyScore (0–100; bands: high 81–100, moderate 51–80, ' +
+      '(likes + comments + shares) / plays and consistencyScore (0–100; bands: high 81–100, moderate 51–80, ' +
       'low 0–50; requires ≥6 videos). `ranking` block carries global/country/language percentiles. ' +
       '`recentVideosGrowth.g7/g30/g90` shows engagement-rate trend. `contentCountByDays.7d/30d/90d` ' +
       'shows posting cadence. TikTok has no all-time window (YouTube-only). Costs 1.5 credits.',
@@ -156,8 +156,8 @@ export function registerTiktokTools(server: McpServer, apiKey: string) {
       'get_tiktok_content_detail only). Content-level filterable: description, hashtag, ' +
       'publishTime (integer "days ago"), plays, diggs (request name) / likes (response name), ' +
       'comments, shares, engagement, lengthSec, performanceDiggs, performanceEngagement. ' +
-      'Creator-level filters also supported. Engagement formula = (likes+comments+shares)/' +
-      'followers. Costs 2 credits per page.',
+      'Creator-level filters also supported. Engagement formula = (likes + comments + shares) / ' +
+      'plays. Costs 2 credits per page.',
     {
       filters: z
         .array(
