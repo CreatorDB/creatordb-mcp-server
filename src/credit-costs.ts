@@ -3,7 +3,7 @@
  * `creatordb://credits/costs` MCP resource.
  *
  * PROVENANCE — every value here was confirmed against the LIVE V3 API on the
- * date in CREDIT_COSTS_VERIFIED_ON (contact, audience, YT/IG content-search,
+ * date in CREDIT_COSTS_VERIFIED_ON (contact, audience, content-search,
  * and the fractional 0.1/field + 0.1/item + 0.2-block rates were hit directly;
  * the rest come from tool descriptions that were themselves corrected against
  * live in v1.4.2, commit 875b0d5). The scrapers-repo `endpointCreditCost.ts` is
@@ -59,13 +59,7 @@ export const CREDIT_COST_ROWS: CreditCostRow[] = [
   // ── Content search (individual posts, not creators) ────────────────────────
   {
     group: 'Content search (individual posts)',
-    tool: 'search_youtube_content',
-    cost: '50 / page',
-    notes: 'EXPENSIVE. A `description` filter would add a join (→100/page), but that filter is currently deferred (returns 400) — so 50 is the effective cost today.',
-  },
-  {
-    group: 'Content search (individual posts)',
-    tool: 'search_{instagram,tiktok}_content',
+    tool: 'search_tiktok_content',
     cost: '2 / page',
   },
 
@@ -195,7 +189,7 @@ export function renderCreditCostsMarkdown(): string {
   return `# CreatorDB — credit costs per tool
 
 Up-front credit cost for every tool. Read this **before** making paid calls so you
-can budget credits and avoid surprises (e.g. \`search_youtube_content\` costs 50).
+can budget credits and avoid surprises (e.g. \`get_youtube_contact\` costs 15).
 
 - Costs are in **display credits**. The **exact** charge for any call is returned
   as \`creditsUsed\` in that call's response — this table is the estimate.
