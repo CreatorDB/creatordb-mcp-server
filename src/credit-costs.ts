@@ -73,8 +73,8 @@ export const CREDIT_COST_ROWS: CreditCostRow[] = [
   },
   {
     group: 'Creator profile & analytics',
-    tool: 'get_{youtube,instagram}_performance / get_tiktok_performance',
-    cost: '2 (TikTok 1.5)',
+    tool: 'get_youtube_performance / get_instagram_performance / get_tiktok_performance',
+    cost: '3 / 2 / 1.5 (YT / IG / TT)',
     notes: 'Fractional by block; the full bundle is capped at the numbers shown.',
   },
   {

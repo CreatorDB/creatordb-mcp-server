@@ -42,7 +42,7 @@ const profileFields = {
 const performanceFields = {
   fields: z.array(z.string())
     .optional()
-    .describe("Fractional Calls — request only these performance blocks (capped at 2): contentCountByDays (0.2), ranking (0.4), videosPerformanceRecent (1), shortsPerformanceRecent (1), videosPerformanceAll (1), shortsPerformanceAll (1), recentVideosGrowth (0.2), recentShortsGrowth (0.2), videoPrice (0.5), shortsPrice (0.5). Example: ['videoPrice','shortsPrice'] = 1. Omit for the full set (2)."),
+    .describe("Fractional Calls — request only these performance blocks (capped at 3): contentCountByDays (0.2), ranking (0.4), rankingByTopic (0.4), videosPerformanceRecent (0.5), shortsPerformanceRecent (0.5), contentsPerformanceRecent (0.5), videosPerformanceAll (0.5), shortsPerformanceAll (0.5), videosPerformance30d/90d & shortsPerformance30d/90d (0.1 each), recentVideosGrowth (0.2), recentShortsGrowth (0.2), videoPrice (0.5), shortsPrice (0.5). Example: ['videoPrice','shortsPrice'] = 1. Omit for the full set (3)."),
 };
 
 const audienceFields = {
@@ -112,7 +112,8 @@ export function registerYoutubeTools(server: McpServer, apiKey: string) {
       '(likes + comments) / views and consistencyScore (0–100; bands: high 81–100, moderate 51–80, ' +
       'low 0–50; requires ≥6 content pieces). `ranking` block carries global/country/language ' +
       'percentiles. `recentVideosGrowth.g7/g30/g90` shows engagement-rate trend. ' +
-      '`contentCountByDays.7d/30d/90d` shows posting cadence. Costs 2 credits.',
+      '`contentCountByDays.7d/30d/90d` shows posting cadence. `videosPerformance30d/90d` + ' +
+      '`shortsPerformance30d/90d` carry per-window view stats. Costs 3 credits.',
     { ...channelLookupParam, ...performanceFields },
     async ({ channelId, uniqueId, fields }) => {
       const result = await callApi(apiKey, '/youtube/performance', {
