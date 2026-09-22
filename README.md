@@ -246,7 +246,7 @@ Creator-key: `channelId` (the UC… form — `@handle` / `/c/` / `/user/` URLs a
 | --- | --- | --- |
 | `get_youtube_profile` | 2 | Identity, subscribers, country, language, linked socials, channel categories, plus the creator's `topics` and `niches`. |
 | `get_youtube_contact` | 15 | Email addresses. |
-| `get_youtube_performance` | 2 | R20 (last 20 videos) + all-time (up to 800) engagement metrics; consistency scores. |
+| `get_youtube_performance` | 3 | R20 (last 20 videos) + all-time (up to 800) engagement metrics; consistency scores; 30d/90d view windows. |
 | `get_youtube_performance_history` | 3 | Daily snapshots over the past N days. Takes `pastDayRange` (string integer, 1–365). |
 | `get_youtube_audience` | 10 | Age buckets, gender split, top countries. |
 | `get_youtube_content_detail` | 3 | Recent videos + shorts with per-item engagement. |
