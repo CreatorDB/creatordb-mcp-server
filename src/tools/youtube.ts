@@ -1,6 +1,7 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { BASE_URL, callApi } from '../util/api-client.js';
+import { clientHeaders } from '../util/client-info.js';
 import { formatToolResult } from '../util/response.js';
 import { taxonomyParams, runTaxonomyTool } from '../util/taxonomy-tool.js';
 
@@ -280,7 +281,7 @@ export function registerYoutubeTools(server: McpServer, apiKey: string) {
       url.searchParams.set('vssId', vssId);
       const res = await fetch(url, {
         method: 'GET',
-        headers: { 'api-key': apiKey, 'Content-Type': 'application/json' },
+        headers: { ...clientHeaders(), 'api-key': apiKey, 'Content-Type': 'application/json' },
       });
       const body: unknown = await res.json();
 

@@ -164,6 +164,15 @@ After install, restart Claude Code (or your MCP client) and:
 2. Ask Claude something that uses the tools, e.g. *"use creatordb to look up the YouTube profile for MrBeast (channelId UCX6OQ3DkcsbYNE6H8uQQuVA)"*
 3. The response should include creator data and a `Credits used: 2 | Remaining: …` footer
 
+## What the server sends to CreatorDB
+
+Besides your API key and the request itself, every call to the CreatorDB API identifies the MCP server so we can see how it's used:
+
+- `User-Agent: creatordb-mcp/<version> (<stdio|hosted>; client=<name>/<version>)`: the server version, whether it's this npm package (`stdio`) or the remote connector (`hosted`), and the MCP client name/version your app reported when it connected (e.g. Claude, Cursor).
+- `X-CreatorDB-MCP-Tool: <tool name>`: which tool made the call.
+
+Nothing else about your machine or conversation is sent.
+
 ## Troubleshooting
 
 | Symptom | Cause | Fix |

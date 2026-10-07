@@ -1,3 +1,5 @@
+import { clientHeaders } from './client-info.js';
+
 export const BASE_URL = process.env.CREATORDB_API_BASE || 'https://apiv3.creatordb.app';
 
 export interface ApiResponse {
@@ -34,6 +36,7 @@ async function doFetch(
   return fetch(url, {
     method: options.method,
     headers: {
+      ...clientHeaders(),
       'api-key': apiKey,
       'Content-Type': 'application/json',
     },
