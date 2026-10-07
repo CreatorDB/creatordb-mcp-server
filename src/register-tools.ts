@@ -7,6 +7,7 @@ import { registerSponsorTools } from './tools/sponsors.js';
 import { registerAccountTools } from './tools/account.js';
 import { registerResources } from './resources.js';
 import { TOOL_ANNOTATIONS } from './tool-annotations.js';
+import { runInToolCall, type ClientTransport } from './util/client-info.js';
 
 type ToolFn = McpServer['tool'];
 
@@ -19,29 +20,50 @@ type ToolFn = McpServer['tool'];
  * unambiguous `tool(name, description, paramsSchema, annotations, cb)` overload.
  * A tool with no annotation entry is logged (drift guard) and registered as-is.
  */
-function withToolAnnotations(server: McpServer): void {
+function withToolAnnotations(server: McpServer, transport: ClientTransport): void {
   const original = server.tool.bind(server) as ToolFn;
   const wrapped = ((name: string, ...rest: unknown[]) => {
     const annotations = TOOL_ANNOTATIONS[name];
     const call = original as (...args: unknown[]) => ReturnType<ToolFn>;
+    const handler = withToolCallContext(server, transport, name, rest[rest.length - 1]);
+    const head = rest.slice(0, -1); // [description, paramsSchema]
     if (!annotations) {
       console.error(`[creatordb-mcp] no annotations registered for tool "${name}"`);
-      return call(name, ...rest);
+      return call(name, ...head, handler);
     }
-    const handler = rest[rest.length - 1];
-    const head = rest.slice(0, -1); // [description, paramsSchema]
     return call(name, ...head, annotations, handler);
   }) as unknown as ToolFn;
   server.tool = wrapped;
 }
 
 /**
+ * Run a tool's handler with its call context (transport, tool name, the MCP client from the
+ * `initialize` handshake) visible to the API client, which reports it in the User-Agent and
+ * X-CreatorDB-MCP-Tool headers. The client is read when the call runs, not at registration —
+ * the handshake has not happened yet when tools are registered.
+ */
+function withToolCallContext(server: McpServer, transport: ClientTransport, tool: string, handler: unknown): unknown {
+  if (typeof handler !== 'function') {
+    return handler;
+  }
+  return (...args: unknown[]) =>
+    runInToolCall({ transport, tool, mcpClient: server.server.getClientVersion() }, () => handler(...args));
+}
+
+/** Options for registerAllTools */
+export interface RegisterToolsOptions {
+  /** How this server is reached: the local npm package (default) or the hosted connector */
+  transport?: ClientTransport;
+}
+
+/**
  * Register every CreatorDB MCP tool on the given server instance, bound to the
  * given V3 API key. Used by both the stdio entry (one key for the lifetime of
- * the process) and the HTTP entry (a fresh server + key per request).
+ * the process) and the HTTP entry (a fresh server + key per request), which
+ * passes `transport: 'hosted'` so its traffic is distinguishable in V3 usage.
  */
-export function registerAllTools(server: McpServer, apiKey: string): void {
-  withToolAnnotations(server);
+export function registerAllTools(server: McpServer, apiKey: string, options: RegisterToolsOptions = {}): void {
+  withToolAnnotations(server, options.transport ?? 'stdio');
   registerSearchTools(server, apiKey);
   registerYoutubeTools(server, apiKey);
   registerInstagramTools(server, apiKey);
