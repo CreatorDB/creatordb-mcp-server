@@ -9,7 +9,7 @@ const filterSchema = z.object({
     .describe(
       'Field to filter on. Common across all platforms: displayName, uniqueId, country (ISO 3166-1 ' +
         'alpha-3, e.g. "USA"), mainLanguage (ISO 639-3, e.g. "eng"), hashtags, niches, ' +
-        'mainAudienceLocation, mainAudienceAge, mainAudienceGender, hasSponsors. ' +
+        'mainAudienceLocation, mainAudienceAge, mainAudienceGender. hasSponsors is YT/IG only. ' +
         'Platform-specific count fields: YT uses totalSubscribers; IG/TT use totalFollowers. ' +
         'YT-only: topics. Engagement fields exist on all three.',
     ),
@@ -145,8 +145,8 @@ export function registerSearchTools(server: McpServer, apiKey: string) {
     'search_tiktok',
     'Search TikTok creators using structured filters. Costs 1 credit per 10 filters (max 10). ' +
       'Use totalFollowers (NOT totalSubscribers) for count thresholds. TT has `niches` but NOT ' +
-      '`topics` (YouTube-only). Hashtag values need the "#" prefix. Note: TikTok does not expose ' +
-      'a per-brand sponsorship endpoint, so hasSponsors-style filtering is coarser than on YT/IG. ' +
+      '`topics` (YouTube-only). Hashtag values need the "#" prefix. TikTok has no sponsorship data: ' +
+      'hasSponsors is not a valid TikTok filter and returns VALIDATION_ERROR. ' +
       'Response: `creatorList`, `totalResults`, `hasNextPage`, `nextOffset`. ' +
       'Results are sorted by totalFollowers (descending) unless you pass your own `sortBy`.',
     searchBodySchema,
