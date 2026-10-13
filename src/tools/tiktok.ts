@@ -15,7 +15,7 @@ const uniqueIdParam = {
 const profileFields = {
   fields: z.array(z.string())
     .optional()
-    .describe("Fractional Calls — request only the profile fields you need to pay less than the full 2 credits. Each field is 0.1 credit (languages and subscriberGrowth are 0.2), capped at 2. Field names are the response keys (e.g. displayName, country, mainLanguage, totalSubscribers/totalFollowers, bio, isVerified, hasSponsors, hashtags, niches). Example: ['country'] = 0.1; ['displayName','totalFollowers'] = 0.2. Omit for the full profile (2)."),
+    .describe("Fractional Calls — request only the profile fields you need to pay less than the full 2 credits. Each field is 0.1 credit (languages and subscriberGrowth are 0.2), capped at 2. Field names are the response keys (e.g. displayName, country, mainLanguage, totalSubscribers/totalFollowers, bio, isVerified, hasSponsors, hashtags, niches, hasEmail). Example: ['country'] = 0.1; ['displayName','totalFollowers'] = 0.2. Omit for the full profile (2)."),
 };
 
 const performanceFields = {
@@ -46,9 +46,12 @@ export function registerTiktokTools(server: McpServer, apiKey: string) {
   server.tool(
     'get_tiktok_profile',
     'Get a TikTok creator\'s profile: display name, follower count, biography, isVerified flag, ' +
-      'country (ISO 3166-1 alpha-3), main language, linked socials, hashtags, and the creator\'s ' +
-      'AI-classified `niches`. To browse the full TT niche taxonomy use list_tiktok_niches. ' +
-      'Costs 2 credits.',
+      'country (ISO 3166-1 alpha-3), main language, linked socials, hashtags, the creator\'s ' +
+      'AI-classified `niches`, `isAgencyRepresented`, `joinedDate` (account creation, Unix ms), and ' +
+      '`relatedCreators` (accounts TikTok itself lists as related to the creator, passed through ' +
+      'unfiltered; can include the creator\'s own handle). `hasEmail` says whether ' +
+      'get_tiktok_contact would return an email: request it via fields (0.1 credit) before paying ' +
+      '15 for contact. To browse the full TT niche taxonomy use list_tiktok_niches. Costs 2 credits.',
     { ...uniqueIdParam, ...profileFields },
     async ({ uniqueId, fields }) => {
       const result = await callApi(apiKey, '/tiktok/profile', {
