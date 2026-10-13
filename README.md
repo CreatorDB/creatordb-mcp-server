@@ -317,7 +317,7 @@ Shared across YT/IG/TT:
 - `subscriberGrowth: { g7, g30, g90 }` — % change in subscribers/followers over the last 7/30/90 days. Free trend signal — no need to call `performance-history` if you only want the headline number.
 - `hashtags: [{ name, contentCount }]` — hashtags the creator uses (note: `name` carries the `#` on IG/TT).
 - `niches: ["id_vlog_PeopleBlogs", …]` — per-creator niche IDs. To resolve the human-readable name + category + channelCount, cross-reference `list_{platform}_niches`.
-- `relatedCreators` — the accounts the platform itself lists as related to the creator, passed through unfiltered (YT: UC channelIds; IG/TT: handles). On TikTok the list often includes the creator's own handle. Cheap way to expand a seed list.
+- `relatedCreators` — accounts the platform itself recommends or lists as related to the creator. YT: UC channelIds of channels YouTube recommends alongside this channel's videos, most frequent first. IG/TT: handles, passed through as the platform provides them. On TikTok the list often includes the creator's own handle. Cheap way to expand a seed list.
 - `hasEmail` — whether `get_{platform}_contact` would return an email. Request it via `fields` (0.1 credit) before paying 15 for contact.
 - `isAgencyRepresented` — `true` when CreatorDB has a record of agency representation; `false` also covers creators with no record.
 - `lastPublishTime` / `lastDbUpdateTime` — Unix-ms; pair them to know how stale the snapshot is vs how recently the creator posted.
