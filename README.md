@@ -317,22 +317,28 @@ Shared across YT/IG/TT:
 - `subscriberGrowth: { g7, g30, g90 }` — % change in subscribers/followers over the last 7/30/90 days. Free trend signal — no need to call `performance-history` if you only want the headline number.
 - `hashtags: [{ name, contentCount }]` — hashtags the creator uses (note: `name` carries the `#` on IG/TT).
 - `niches: ["id_vlog_PeopleBlogs", …]` — per-creator niche IDs. To resolve the human-readable name + category + channelCount, cross-reference `list_{platform}_niches`.
-- `relatedCreators` — discovery vector. YT gives ~50–250 UC channelIds; IG gives ~50 handles. Cheap way to expand a seed list.
+- `relatedCreators` — the accounts the platform itself lists as related to the creator, passed through unfiltered (YT: UC channelIds; IG/TT: handles). On TikTok the list often includes the creator's own handle. Cheap way to expand a seed list.
+- `hasEmail` — whether `get_{platform}_contact` would return an email. Request it via `fields` (0.1 credit) before paying 15 for contact.
+- `isAgencyRepresented` — `true` when CreatorDB has a record of agency representation; `false` also covers creators with no record.
 - `lastPublishTime` / `lastDbUpdateTime` — Unix-ms; pair them to know how stale the snapshot is vs how recently the creator posted.
 - `country` — ISO 3166-1 alpha-3 (e.g. `"USA"`, `"JPN"`). On IG this value is derived from a content classifier rather than a self-declared field, and can occasionally be wrong for creators with multi-country presence — cross-check against `audienceLocations` and the creator's bio if accuracy matters.
 
 YT-only:
 - `topics: ["id_challenges_Comedy", …]` — coarse topic IDs (~470 universe). Resolve via `list_youtube_topics`.
-- `videoPrice` + `shortsPrice`: `{ cpmLow, cpmRaw, cpmHigh, priceLow, priceRaw, priceHigh }` — sponsored video / shorts CPM and dollar rate bands. **YouTube-only**; IG/TT do not return pricing in `/profile`.
+- `totalViews` — lifetime channel views, as shown on the channel's About panel.
+- `joinedDate` — when the channel was created (Unix ms, day precision).
+- Sponsored video / shorts CPM and rate bands (`videoPrice`, `shortsPrice`) are no longer on profile; they're on `get_youtube_performance`.
 - `categoryBreakdown: [{ category, share }]` — share of recent content by YouTube native category.
 - `hasMemberOnlyContents` — boolean.
 
 IG-only:
 - `isBusinessAccount`, `isPrivateAccount` — flags worth checking before promising audience data; private accounts can't be scraped.
 - `otherLinks` — bio links array.
+- `imageLastPublishTime` / `reelsLastPublishTime` — latest image post and latest reel (Unix ms); `lastPublishTime` is the later of the two.
 
 TT-only:
 - `otherLinks` — bio link (TikTok allows one).
+- `joinedDate` — when the account was created (Unix ms).
 
 ### `/audience`
 

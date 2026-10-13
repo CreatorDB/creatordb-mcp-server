@@ -77,8 +77,7 @@ export function registerYoutubeTools(server: McpServer, apiKey: string) {
       'creation, Unix ms), country (ISO 3166-1 alpha-3), main language, linked socials, ' +
       'channel-level hashtags, YouTube native channel categories, AI-classified `topics` (coarse) ' +
       'and `niches` (granular), `subscriberGrowth.g7/g30/g90` trend deltas, and `relatedCreators` ' +
-      '(UC IDs YouTube itself lists as related to the channel, passed through unfiltered; can ' +
-      'include the channel\'s own ID). `hasEmail` says whether get_youtube_contact would return an ' +
+      '(UC IDs YouTube itself lists as related to the channel, passed through unfiltered). `hasEmail` says whether get_youtube_contact would return an ' +
       'email: request it via fields (0.1 credit) before paying 15 for contact. Sponsored-video CPM ' +
       'and rate bands (`videoPrice`, `shortsPrice`) are not on profile; use get_youtube_performance. ' +
       'Use list_youtube_topics / list_youtube_niches to resolve topic/niche IDs to human names. ' +

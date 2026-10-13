@@ -56,8 +56,7 @@ export function registerInstagramTools(server: McpServer, apiKey: string) {
       'linked socials (YouTube/TikTok), hashtags used, account-level categories, the ' +
       'creator\'s AI-classified `niches`, `isAgencyRepresented`, latest image and reel times ' +
       '(`imageLastPublishTime`, `reelsLastPublishTime`, Unix ms), and `relatedCreators` (handles ' +
-      'Instagram itself lists as related to the account, passed through unfiltered; can include the ' +
-      'account\'s own handle). `hasEmail` says whether get_instagram_contact would return an email: ' +
+      'Instagram itself lists as related to the account, passed through unfiltered). `hasEmail` says whether get_instagram_contact would return an email: ' +
       'request it via fields (0.1 credit) before paying 15 for contact. To browse the full IG niche ' +
       'taxonomy use list_instagram_niches. Costs 2 credits.',
     { ...uniqueIdParam, ...profileFields },
