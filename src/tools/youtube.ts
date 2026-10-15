@@ -36,7 +36,7 @@ function ytLookup(channelId?: string, uniqueId?: string): Record<string, string>
 const profileFields = {
   fields: z.array(z.string())
     .optional()
-    .describe("Fractional Calls — request only the profile fields you need to pay less than the full 2 credits. Each field is 0.1 credit (languages and subscriberGrowth are 0.2), capped at 2. Field names are the response keys (e.g. displayName, country, mainLanguage, totalSubscribers/totalFollowers, bio, isVerified, hasSponsors, hashtags, niches). Example: ['country'] = 0.1; ['displayName','totalSubscribers'] = 0.2. Omit for the full profile (2)."),
+    .describe("Fractional Calls — request only the profile fields you need to pay less than the full 2 credits. Each field is 0.1 credit (languages and subscriberGrowth are 0.2), capped at 2. Field names are the response keys (e.g. displayName, country, mainLanguage, totalSubscribers/totalFollowers, bio, isVerified, hasSponsors, hashtags, niches, hasEmail). Example: ['country'] = 0.1; ['displayName','totalSubscribers'] = 0.2. Omit for the full profile (2)."),
 };
 
 const performanceFields = {
@@ -72,13 +72,16 @@ const sponsorshipFields = {
 export function registerYoutubeTools(server: McpServer, apiKey: string) {
   server.tool(
     'get_youtube_profile',
-    'Get a YouTube creator\'s profile: display name, subscriber count, description, isVerified, ' +
-      'country (ISO 3166-1 alpha-3), main language, linked socials, channel-level hashtags, ' +
-      'YouTube native channel categories, AI-classified `topics` (coarse) and `niches` (granular), ' +
-      '`subscriberGrowth.g7/g30/g90` trend deltas, `relatedCreators` UC IDs for discovery, and ' +
-      'sponsored `videoPrice` + `shortsPrice` blocks with low/raw/high CPM and dollar bands ' +
-      '(YouTube-only — IG/TT do not return pricing). Use list_youtube_topics / list_youtube_niches ' +
-      'to resolve topic/niche IDs to human names. Costs 2 credits.',
+    'Get a YouTube creator\'s profile: display name, subscriber count, lifetime channel views ' +
+      '(`totalViews`), description, isVerified, `isAgencyRepresented`, `joinedDate` (channel ' +
+      'creation, Unix ms), country (ISO 3166-1 alpha-3), main language, linked socials, ' +
+      'channel-level hashtags, YouTube native channel categories, AI-classified `topics` (coarse) ' +
+      'and `niches` (granular), `subscriberGrowth.g7/g30/g90` trend deltas, and `relatedCreators` ' +
+      '(UC IDs of channels YouTube recommends alongside this channel\'s videos, most frequent first). `hasEmail` says whether get_youtube_contact would return an ' +
+      'email: request it via fields (0.1 credit) before paying 15 for contact. Sponsored-video CPM ' +
+      'and rate bands (`videoPrice`, `shortsPrice`) are not on profile; use get_youtube_performance. ' +
+      'Use list_youtube_topics / list_youtube_niches to resolve topic/niche IDs to human names. ' +
+      'Costs 2 credits.',
     { ...channelLookupParam, ...profileFields },
     async ({ channelId, uniqueId, fields }) => {
       const result = await callApi(apiKey, '/youtube/profile', {

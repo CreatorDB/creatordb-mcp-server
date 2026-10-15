@@ -15,7 +15,7 @@ const uniqueIdParam = {
 const profileFields = {
   fields: z.array(z.string())
     .optional()
-    .describe("Fractional Calls — request only the profile fields you need to pay less than the full 2 credits. Each field is 0.1 credit (languages and subscriberGrowth are 0.2), capped at 2. Field names are the response keys (e.g. displayName, country, mainLanguage, totalSubscribers/totalFollowers, bio, isVerified, hasSponsors, hashtags, niches). Example: ['country'] = 0.1; ['displayName','totalFollowers'] = 0.2. Omit for the full profile (2)."),
+    .describe("Fractional Calls — request only the profile fields you need to pay less than the full 2 credits. Each field is 0.1 credit (languages and subscriberGrowth are 0.2), capped at 2. Field names are the response keys (e.g. displayName, country, mainLanguage, totalSubscribers/totalFollowers, bio, isVerified, hasSponsors, hashtags, niches, hasEmail). Example: ['country'] = 0.1; ['displayName','totalFollowers'] = 0.2. Omit for the full profile (2)."),
 };
 
 const performanceFields = {
@@ -53,9 +53,12 @@ export function registerInstagramTools(server: McpServer, apiKey: string) {
     'get_instagram_profile',
     'Get an Instagram creator\'s profile: display name, follower count, biography, ' +
       'isVerified/isBusinessAccount flags, country (ISO 3166-1 alpha-3), main language, ' +
-      'linked socials (YouTube/TikTok), hashtags used, account-level categories, and the ' +
-      'creator\'s AI-classified `niches`. To browse the full IG niche taxonomy use ' +
-      'list_instagram_niches. Costs 2 credits.',
+      'linked socials (YouTube/TikTok), hashtags used, account-level categories, the ' +
+      'creator\'s AI-classified `niches`, `isAgencyRepresented`, latest image and reel times ' +
+      '(`imageLastPublishTime`, `reelsLastPublishTime`, Unix ms), and `relatedCreators` (handles ' +
+      'Instagram itself lists as related to the account, passed through unfiltered). `hasEmail` says whether get_instagram_contact would return an email: ' +
+      'request it via fields (0.1 credit) before paying 15 for contact. To browse the full IG niche ' +
+      'taxonomy use list_instagram_niches. Costs 2 credits.',
     { ...uniqueIdParam, ...profileFields },
     async ({ uniqueId, fields }) => {
       const result = await callApi(apiKey, '/instagram/profile', {
