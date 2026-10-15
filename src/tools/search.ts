@@ -25,8 +25,10 @@ const filterSchema = z.object({
       'Filter value — TYPE MUST MATCH THE FIELD. For numeric ops (>, <, = on count/rate fields) ' +
         'send a number, NOT a numeric string ("1000000" → VALIDATION_ERROR; 1000000 → ok). ' +
         'For string ops (= / in on country, language, displayName, hashtags, niches) send a ' +
-        'string or string array. Boolean ops take true/false. Hashtags on IG/TT carry a leading ' +
-        '"#" in the index, so values usually want "#beauty", not "beauty".',
+        'string or string array. Boolean ops take true/false. Hashtag values match with or ' +
+        'without a leading # and are case-insensitive. Ratio and percentile fields ' +
+        '(audienceMaleRatio, audienceFemaleRatio, and YouTube\'s *Percentile fields) take a ' +
+        'decimal from 0 to 1, not 0-100: 0.6 = 60%, 0.9 = top 10%.',
     ),
   isFuzzySearch: z
     .boolean()
@@ -127,8 +129,8 @@ export function registerSearchTools(server: McpServer, apiKey: string) {
     'search_instagram',
     'Search Instagram creators using structured filters. Costs 1 credit per 10 filters (max 10). ' +
       'Use totalFollowers (NOT totalSubscribers) for count thresholds. IG has `niches` but NOT ' +
-      '`topics` (YouTube-only). Hashtag values need the "#" prefix to match the indexed ' +
-      'hashTagsSearch field. Response: `creatorList`, `totalResults`, `hasNextPage`, `nextOffset`. ' +
+      '`topics` (YouTube-only). Hashtag values match with or without a leading # and are ' +
+      'case-insensitive. Response: `creatorList`, `totalResults`, `hasNextPage`, `nextOffset`. ' +
       'Results are sorted by totalFollowers (descending) unless you pass your own `sortBy`.',
     searchBodySchema,
     async (params) => {
@@ -145,7 +147,8 @@ export function registerSearchTools(server: McpServer, apiKey: string) {
     'search_tiktok',
     'Search TikTok creators using structured filters. Costs 1 credit per 10 filters (max 10). ' +
       'Use totalFollowers (NOT totalSubscribers) for count thresholds. TT has `niches` but NOT ' +
-      '`topics` (YouTube-only). Hashtag values need the "#" prefix. Note: TikTok does not expose ' +
+      '`topics` (YouTube-only). Hashtag values match with or without a leading # and are ' +
+      'case-insensitive. Note: TikTok does not expose ' +
       'a per-brand sponsorship endpoint, so hasSponsors-style filtering is coarser than on YT/IG. ' +
       'Response: `creatorList`, `totalResults`, `hasNextPage`, `nextOffset`. ' +
       'Results are sorted by totalFollowers (descending) unless you pass your own `sortBy`.',

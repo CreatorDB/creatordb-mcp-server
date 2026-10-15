@@ -217,7 +217,7 @@ The workflow validates that the tag matches `package.json` `version`, runs `npm 
 
 **Filter type gotcha:** numeric ops (`>`, `<`, `=` on subscriber/follower/rate fields) require a **number** value, not a numeric string. `"1000000"` → `VALIDATION_ERROR`; `1000000` → ok.
 
-**Hashtag value gotcha:** stored hashtags on IG/TT carry the leading `#`, so filter values usually want `"#beauty"`, not `"beauty"`.
+**Filter value notes:** hashtag values match with or without a leading `#` and are case-insensitive. Ratio and percentile fields (`audienceMaleRatio`, `audienceFemaleRatio`, and YouTube's `*Percentile` fields) take a decimal from 0 to 1, not 0-100: `0.6` = 60%, `0.9` = top 10%.
 
 ### Sponsors / brand data (8)
 
