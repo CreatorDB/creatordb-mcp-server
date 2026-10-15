@@ -36,7 +36,7 @@ function ytLookup(channelId?: string, uniqueId?: string): Record<string, string>
 const profileFields = {
   fields: z.array(z.string())
     .optional()
-    .describe("Fractional Calls — request only the profile fields you need to pay less than the full 2 credits. Each field is 0.1 credit (languages and subscriberGrowth are 0.2), capped at 2. Field names are the response keys (e.g. displayName, country, mainLanguage, totalSubscribers/totalFollowers, bio, isVerified, hasSponsors, hashtags, niches, hasEmail). Example: ['country'] = 0.1; ['displayName','totalSubscribers'] = 0.2. Omit for the full profile (2)."),
+    .describe("Fractional Calls — request only the profile fields you need to pay less than the full 2 credits. Each field is 0.1 credit (languages and subscriberGrowth are 0.2), capped at 2. Field names are the response keys (e.g. displayName, country, mainLanguage, totalSubscribers/totalFollowers, bio, isVerified, hasSponsors, hashtags, niches, hasEmail, isPodcast). Example: ['country'] = 0.1; ['displayName','totalSubscribers'] = 0.2. Omit for the full profile (2)."),
 };
 
 const performanceFields = {
@@ -80,6 +80,9 @@ export function registerYoutubeTools(server: McpServer, apiKey: string) {
       '(UC IDs of channels YouTube recommends alongside this channel\'s videos, most frequent first). `hasEmail` says whether get_youtube_contact would return an ' +
       'email: request it via fields (0.1 credit) before paying 15 for contact. Sponsored-video CPM ' +
       'and rate bands (`videoPrice`, `shortsPrice`) are not on profile; use get_youtube_performance. ' +
+      '`isPodcast` (true / false / null) is an AI-classifier label for podcast channels (long-form ' +
+      'conversational, interview or episodic shows); null means the channel has not been classified. ' +
+      'Request it alone via fields for 0.1 credit. ' +
       'Use list_youtube_topics / list_youtube_niches to resolve topic/niche IDs to human names. ' +
       'Costs 2 credits.',
     { ...channelLookupParam, ...profileFields },
