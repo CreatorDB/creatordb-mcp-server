@@ -11,7 +11,7 @@ const filterSchema = z.object({
         'alpha-3, e.g. "USA"), mainLanguage (ISO 639-3, e.g. "eng"), hashtags, niches, ' +
         'mainAudienceLocation, mainAudienceAge, mainAudienceGender, hasSponsors. ' +
         'Platform-specific count fields: YT uses totalSubscribers; IG/TT use totalFollowers. ' +
-        'YT-only: topics. Engagement fields exist on all three.',
+        'YT-only: topics, isPodcast. Engagement fields exist on all three.',
     ),
   op: z
     .enum(['>', '=', '<', 'in'])
@@ -109,7 +109,8 @@ export function registerSearchTools(server: McpServer, apiKey: string) {
     'Search YouTube creators using structured filters. Costs 1 credit per 10 filters (max 10). ' +
       'Use totalSubscribers (NOT totalFollowers) for count thresholds. YT-specific filterable ' +
       'fields: `topics` (coarse ~400-theme taxonomy — IG/TT don\'t have it), `niches` (granular; ' +
-      'also on IG/TT but derived separately). Response: `creatorList`, `totalResults`, ' +
+      'also on IG/TT but derived separately), `isPodcast` (boolean, `=` only, not sortable; AI-labelled ' +
+      'podcast channels; unclassified channels match neither true nor false). Response: `creatorList`, `totalResults`, ' +
       '`hasNextPage`, `nextOffset` — pass nextOffset as the next request\'s offset to paginate. ' +
       'Results are sorted by totalSubscribers (descending) unless you pass your own `sortBy`.',
     searchBodySchema,
