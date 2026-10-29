@@ -74,9 +74,9 @@ const searchBodySchema = {
       performance: z.array(z.string()).optional(),
       audience: z.array(z.string()).optional(),
       contact: z.array(z.string()).optional(),
-      'content-detail': z.record(z.number().int().min(0)).optional(),
+      'content-detail': z.record(z.string(), z.number().int().min(0)).optional(),
       'performance-history': z.object({ pastDayRange: z.string() }).optional(),
-      sponsorship: z.record(z.number().int().min(0)).optional(),
+      sponsorship: z.record(z.string(), z.number().int().min(0)).optional(),
     })
     .optional()
     .describe(
