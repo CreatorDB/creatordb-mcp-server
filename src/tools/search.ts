@@ -135,12 +135,12 @@ export function registerSearchTools(server: McpServer, apiKey: string) {
   // Natural Language Search
   server.tool(
     'search_creators_nls',
-    'Quick natural-language search: converts one sentence into filters in a single pass and ' +
-      'returns up to 20 creators. Results are NOT checked against the request and are often ' +
-      'loose, so do not use this to build a result list; use search_youtube, search_instagram ' +
-      'and search_tiktok instead. Use it only when the user explicitly asks for natural-language ' +
-      'search. Response includes `creatorList` and the `platform` chosen. Credit cost is dynamic ' +
-      '(token-based, typically 1–10 credits).',
+    'ONLY when the user explicitly asks for natural-language search (NLS) by name. Not the default ' +
+      'way to find creators, and not a fallback when structured searches return few results: use ' +
+      'search_youtube, search_instagram and search_tiktok for every other creator request. Converts ' +
+      'one sentence into filters in a single pass and returns up to 20 creators without checking them ' +
+      'against the request, so results are often loose. Response includes `creatorList` and the ' +
+      '`platform` chosen. Credit cost is dynamic (token-based, typically 1–10 credits).',
     {
       description: z
         .string()
