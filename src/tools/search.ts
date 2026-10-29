@@ -91,7 +91,7 @@ const searchBodySchema = {
         'object requests the full bundle at the endpoint\'s full price. Useful for checking fit ' +
         'without a profile call per creator, e.g. { "profile": ["bio", "niches", "country", ' +
         '"mainLanguage"], "content-detail": { "recentVideos": 3 } } = 0.7 credits per result. In search ' +
-        'results, post descriptions are shortened to 200 characters and bios to 300 to keep responses readable; ' +
+        'results, long text is shortened (and very large pages trimmed further) to keep responses readable; ' +
         'get_*_content_detail and get_*_profile return them in full.',
     ),
 };
@@ -180,10 +180,10 @@ export function registerSearchTools(server: McpServer, apiKey: string) {
         method: 'POST',
         body: withDefaultSort({ ...params, filters: resolved.filters }, 'totalSubscribers'),
       });
-      if (result.success && params.fields) compactSearchEnrichment(result.data);
+      const shortened = result.success && params.fields ? compactSearchEnrichment(result.data) : null;
       const formatted = formatToolResult(result);
       const conversions = resolved.notes.length ? [`Converted to taxonomy IDs: ${resolved.notes.join('; ')}`] : [];
-      return withNotes(formatted, [...conversions, ...emptyResultNote(formatted, params.filters.length)]);
+      return withNotes(formatted, [...conversions, ...(shortened ? [shortened] : []), ...emptyResultNote(formatted, params.filters.length)]);
     },
   );
 
@@ -203,10 +203,10 @@ export function registerSearchTools(server: McpServer, apiKey: string) {
         method: 'POST',
         body: withDefaultSort({ ...params, filters: resolved.filters }, 'totalFollowers'),
       });
-      if (result.success && params.fields) compactSearchEnrichment(result.data);
+      const shortened = result.success && params.fields ? compactSearchEnrichment(result.data) : null;
       const formatted = formatToolResult(result);
       const conversions = resolved.notes.length ? [`Converted to taxonomy IDs: ${resolved.notes.join('; ')}`] : [];
-      return withNotes(formatted, [...conversions, ...emptyResultNote(formatted, params.filters.length)]);
+      return withNotes(formatted, [...conversions, ...(shortened ? [shortened] : []), ...emptyResultNote(formatted, params.filters.length)]);
     },
   );
 
@@ -228,10 +228,10 @@ export function registerSearchTools(server: McpServer, apiKey: string) {
         method: 'POST',
         body: withDefaultSort({ ...params, filters: resolved.filters }, 'totalFollowers'),
       });
-      if (result.success && params.fields) compactSearchEnrichment(result.data);
+      const shortened = result.success && params.fields ? compactSearchEnrichment(result.data) : null;
       const formatted = formatToolResult(result);
       const conversions = resolved.notes.length ? [`Converted to taxonomy IDs: ${resolved.notes.join('; ')}`] : [];
-      return withNotes(formatted, [...conversions, ...emptyResultNote(formatted, params.filters.length)]);
+      return withNotes(formatted, [...conversions, ...(shortened ? [shortened] : []), ...emptyResultNote(formatted, params.filters.length)]);
     },
   );
 }
