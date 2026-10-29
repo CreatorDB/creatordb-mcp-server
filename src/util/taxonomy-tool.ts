@@ -23,7 +23,7 @@ export function taxonomyParams(categoryHint: string) {
       .describe(
         'Whole-word match against entry names, ranked best-first. Use this to resolve a ' +
           'phrase into valid filter values (e.g. "japanese street food") instead of paging ' +
-          'the whole taxonomy. Matching is token-based, not substring: "ski" will not match ' +
+          'the whole taxonomy; the search filter takes each entry\'s `id`, not its `name`. Matching is token-based, not substring: "ski" will not match ' +
           '"skincare". CamelCase entry names are split ("StreetFood" matches "street food"), ' +
           'and common variants are folded together ("vloggers"→"vlog", "japanese"→"japan").',
       ),

@@ -2,6 +2,7 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { callApi, callSseApi } from '../util/api-client.js';
 import { formatToolResult } from '../util/response.js';
+import { checkTaxonomyIds, taxonomyIdError } from '../util/taxonomy-ids.js';
 
 const filterSchema = z.object({
   filterName: z
@@ -11,7 +12,9 @@ const filterSchema = z.object({
         'alpha-3, e.g. "USA"), mainLanguage (ISO 639-3, e.g. "eng"), hashtags, niches, ' +
         'mainAudienceLocation, mainAudienceAge, mainAudienceGender, hasSponsors. ' +
         'Platform-specific count fields: YT uses totalSubscribers; IG/TT use totalFollowers. ' +
-        'YT-only: topics, isPodcast. Engagement fields exist on all three.',
+        'YT-only: topics, isPodcast. Engagement fields exist on all three. `niches` and `topics` take ' +
+        'taxonomy IDs (e.g. "id_canva_Education"), not names: get them from the `id` field of ' +
+        'list_*_niches / list_youtube_topics.',
     ),
   op: z
     .enum(['>', '=', '<', 'in'])
@@ -117,6 +120,8 @@ export function registerSearchTools(server: McpServer, apiKey: string) {
       'Results are sorted by totalSubscribers (descending) unless you pass your own `sortBy`.',
     searchBodySchema,
     async (params) => {
+      const idProblem = checkTaxonomyIds('youtube', params.filters);
+      if (idProblem) return taxonomyIdError(idProblem);
       const result = await callApi(apiKey, '/youtube/search', {
         method: 'POST',
         body: withDefaultSort(params, 'totalSubscribers'),
@@ -135,6 +140,8 @@ export function registerSearchTools(server: McpServer, apiKey: string) {
       'Results are sorted by totalFollowers (descending) unless you pass your own `sortBy`.',
     searchBodySchema,
     async (params) => {
+      const idProblem = checkTaxonomyIds('instagram', params.filters);
+      if (idProblem) return taxonomyIdError(idProblem);
       const result = await callApi(apiKey, '/instagram/search', {
         method: 'POST',
         body: withDefaultSort(params, 'totalFollowers'),
@@ -155,6 +162,8 @@ export function registerSearchTools(server: McpServer, apiKey: string) {
       'Results are sorted by totalFollowers (descending) unless you pass your own `sortBy`.',
     searchBodySchema,
     async (params) => {
+      const idProblem = checkTaxonomyIds('tiktok', params.filters);
+      if (idProblem) return taxonomyIdError(idProblem);
       const result = await callApi(apiKey, '/tiktok/search', {
         method: 'POST',
         body: withDefaultSort(params, 'totalFollowers'),

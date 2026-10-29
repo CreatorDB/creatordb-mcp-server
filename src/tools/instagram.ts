@@ -187,7 +187,7 @@ export function registerInstagramTools(server: McpServer, apiKey: string) {
       'read the `niches` field. Per-platform: IG/YT/TT each have their own niche taxonomy — they ' +
       'are not interchangeable. Instagram does NOT have a "topics" taxonomy (that is ' +
       'YouTube-only). The Instagram taxonomy is one flat list with no category structure, so ' +
-      'paging through it is rarely useful — pass `search` to resolve a phrase to niche names. ' +
+      'paging through it is rarely useful — pass `search` to resolve a phrase to niche IDs (use `id` as the search filter value, not `name`). ' +
       'Costs 1 credit per call regardless of page size.',
     taxonomyParams(
       'Inert on Instagram: every entry sits in a single "All" category. Present for consistency ' +
