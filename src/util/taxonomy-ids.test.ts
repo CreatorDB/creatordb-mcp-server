@@ -72,3 +72,9 @@ test('reports a lookup failure with the list tool to use', async () => {
   assert.equal(r.ok, false);
   if (!r.ok) assert.match(r.message, /list_tiktok_niches/);
 });
+
+test('accepts the Name/Category form the list tools display', async () => {
+  const r = await resolveTaxonomyFilters('youtube', [{ filterName: 'niches', op: 'in', value: ['Canva/Howto Style'] }], loader());
+  assert.ok(r.ok);
+  assert.deepEqual(r.filters[0]!.value, ['id_canva_HowtoStyle']);
+});
