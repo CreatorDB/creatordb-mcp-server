@@ -8,7 +8,7 @@ A [Model Context Protocol](https://modelcontextprotocol.io) server that exposes 
 - **Creator search** — natural-language search across all three platforms, plus structured filter search per platform (country, language, follower thresholds, niches, hashtags, audience demographics, etc.)
 - **Brand-side / sponsor intelligence** *(YouTube + Instagram only — TikTok brand data is not indexed)* — search CreatorDB's 10K+ indexed brands, pull a brand's full profile, list every creator a brand has sponsored, get aggregated audience demographics across a brand's sponsored creator pool, and cross-platform spend / CPM / CPE rollups. The heavier sponsor reads (`get_sponsor_creators`, `get_sponsor_performance`, `get_sponsor_audience`, `get_sponsor_summary`) cost 15 credits each — use deliberately. `get_sponsor_information` is 2, `search_sponsors` 2, `list_sponsors` 1.
 - **Content search** — find individual TikTok videos by content-level filters (publish time window, view/like thresholds, hashtags, language, etc.). Different from creator search — this returns posts, not channels. *(YouTube and Instagram content search are temporarily unavailable while their search is optimized for lower credit consumption; TikTok remains.)*
-- **Topic + niche taxonomies** — paged, searchable catalogs (~470 YT topics, ~16K YT niches, ~40K each on IG/TT) for resolving the per-creator topic/niche IDs returned in profile responses. Pass `search` to resolve a phrase to entry names rather than paging.
+- **Topic + niche taxonomies** — paged, searchable catalogs (~470 YT topics, ~16K YT niches, ~40K each on IG/TT) for resolving the per-creator topic/niche IDs returned in profile responses. Pass `search` to resolve a phrase to entry IDs rather than paging; search filters take the `id`.
 - **Account** — credit usage broken down by endpoint and platform.
 
 Every tool returns the underlying V3 JSON plus a `Credits used: N | Remaining: M` footer line, so the AI knows exactly what it's spending.
@@ -210,12 +210,20 @@ The workflow validates that the tag matches `package.json` `version`, runs `npm 
 
 | Tool | Cost | Notes |
 | --- | --- | --- |
-| `search_creators_nls` | dynamic (token-based) | Natural-language search across all three platforms. The AI picks the platform and converts the query into filters. |
+| `search_creators_nls` | dynamic (token-based) | Natural-language search across all three platforms, converting one sentence into filters in a single pass. For explicit natural-language requests; structured search is the default. |
 | `search_youtube` | 1 per 10 filters | Structured filter search. Use `totalSubscribers` for count thresholds. |
 | `search_instagram` | 1 per 10 filters | Structured filter search. Use `totalFollowers` for count thresholds. |
 | `search_tiktok` | 1 per 10 filters | Structured filter search. Use `totalFollowers` for count thresholds. |
 
 **Filter type gotcha:** numeric ops (`>`, `<`, `=` on subscriber/follower/rate fields) require a **number** value, not a numeric string. `"1000000"` → `VALIDATION_ERROR`; `1000000` → ok.
+
+**Niche and topic values:** the `niches` and `topics` filters take taxonomy IDs (e.g. `id_canva_Education`). A display name (`Canva`) or the `Name/Category` form is converted to the matching IDs and the result says what it was converted to; the first conversion per taxonomy costs 1 credit and is then cached. A name with no exact match returns the closest IDs instead of running the search.
+
+**Enrichment (`fields`):** add data from other endpoints to each result, billed per result at fractional prices, e.g. `{ "profile": ["bio", "niches", "country", "mainLanguage"], "content-detail": { "recentVideos": 3 } }` = 0.7 credits per result. Useful for checking fit without a profile call per creator.
+
+**Empty results:** a search with no matches returns a note on how to widen it.
+
+**Server instructions:** the server sends instructions at connect time describing how the data works (exact filters, taxonomy IDs, country-level location, checking fit with `fields`). Clients connected before an update see new instructions after reconnecting.
 
 **Filter value notes:** hashtag values match with or without a leading `#` and are case-insensitive. Ratio and percentile fields (`audienceMaleRatio`, `audienceFemaleRatio`, and YouTube's `*Percentile` fields) take a decimal from 0 to 1, not 0-100: `0.6` = 60%, `0.9` = top 10%.
 
@@ -405,7 +413,7 @@ NLS response:
 - **`relatedCreators` is unranked** — order is not significance. Don't slice the first N and call them "top related"; sample or rerank by your own metric.
 - **Freshness lag** — `lastDbUpdateTime` is when CreatorDB last refreshed. If it's older than ~14 days, the profile may not reflect recent breakout content.
 - **Niche channelCount drifts** — `list_*_niches` is updated daily; don't cache it longer than that or your "creators in X niche" count will lag reality.
-- **Search the taxonomy, don't page it** — `list_*_niches` returns one page at a time (100 by default, largest first) because the full taxonomies run to ~40,000 entries on Instagram and TikTok. Both are a single flat "All" category with no structure to browse, and the top 100 entries account for only ~18% of creator assignments, so paging rarely gets you anywhere. Pass `search` to resolve a phrase to niche names instead. Matching is whole-word, so `skin` will not find `Skincare`; CamelCase names are split (`StreetFood` matches `street food`) and common variants are folded (`vloggers`→`vlog`, `japanese`→`japan`). On TikTok ~44% of niches have under 100 creators — `minChannelCount` trims that tail.
+- **Search the taxonomy, don't page it** — `list_*_niches` returns one page at a time (100 by default, largest first) because the full taxonomies run to ~40,000 entries on Instagram and TikTok. Both are a single flat "All" category with no structure to browse, and the top 100 entries account for only ~18% of creator assignments, so paging rarely gets you anywhere. Pass `search` to resolve a phrase to niche IDs instead (the search filter takes each entry's `id`). Matching is whole-word, so `skin` will not find `Skincare`; CamelCase names are split (`StreetFood` matches `street food`) and common variants are folded (`vloggers`→`vlog`, `japanese`→`japan`). On TikTok ~44% of niches have under 100 creators — `minChannelCount` trims that tail.
 - **IG `country` is modelled, not self-declared** — YouTube and TikTok return the country a creator set on their own profile; for Instagram, CreatorDB's location model supplies it, so IG has country coverage where the profile states nothing.
 
 ## Filter reference (search tools)
