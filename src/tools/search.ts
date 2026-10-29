@@ -2,7 +2,9 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { callApi, callSseApi } from '../util/api-client.js';
 import { formatToolResult } from '../util/response.js';
-import { apiTaxonomyLoader, resolveTaxonomyFilters, taxonomyIdError } from '../util/taxonomy-ids.js';
+import { apiTaxonomyLoader, resolveTaxonomyFilters, taxonomyIdError, type Platform } from '../util/taxonomy-ids.js';
+import type { ApiResponse } from '../util/api-client.js';
+import { canRank, profileFieldsFor, rankByMatches, wantedSignals } from '../util/relevance.js';
 
 const filterSchema = z.object({
   filterName: z
@@ -68,6 +70,25 @@ const searchBodySchema = {
         'whose message enumerates every accepted field for that platform.',
     ),
   desc: z.boolean().default(true).describe('Sort descending (true) or ascending (false).'),
+  rankBy: z
+    .enum(['sort', 'relevance'])
+    .default('sort')
+    .describe(
+      'OPTIONAL. "sort" (default) returns results in `sortBy` order. "relevance" ranks creators by how ' +
+        'many of the requested niches, topics and hashtags they match (most first; ties go to heavier ' +
+        'hashtag use), so a creator tagged with 6 of 8 requested niches beats one tagged with 1. It needs ' +
+        'at least two requested values across niches/topics/hashtags. The server fetches a pool of ' +
+        '`poolSize` matches in `sortBy` order with their niches/topics/hashtags (0.1 credit per field per ' +
+        'creator), ranks it, and returns the top `pageSize` with `matchCount` and `matched` on each; ' +
+        '`fields` enrichment then applies only to those top results. Pagination (`offset`) is not used.',
+    ),
+  poolSize: z
+    .number()
+    .int()
+    .min(50)
+    .max(300)
+    .default(200)
+    .describe('With rankBy "relevance": how many matches to fetch and rank (default 200, max 300).'),
   fields: z
     .object({
       profile: z.array(z.string()).optional(),
@@ -131,6 +152,98 @@ function withNotes<T extends { content: Array<{ type: 'text'; text: string }> }>
   return { ...result, content: [...result.content, ...notes.map((text) => ({ type: 'text' as const, text }))] };
 }
 
+type SearchParams = {
+  filters: Array<{ filterName: string; op: '>' | '=' | '<' | 'in'; value: string | number | boolean | string[]; isFuzzySearch?: boolean }>;
+  pageSize: number;
+  offset: number;
+  sortBy?: string;
+  desc: boolean;
+  rankBy?: 'sort' | 'relevance';
+  poolSize?: number;
+  fields?: Record<string, unknown>;
+};
+
+/** One search request for every platform: name→ID conversion, optional relevance ranking, notes. */
+async function runSearch(apiKey: string, platform: Platform, defaultSort: string, params: SearchParams) {
+  const resolved = await resolveTaxonomyFilters(platform, params.filters, apiTaxonomyLoader(apiKey));
+  if (!resolved.ok) return taxonomyIdError(resolved.message);
+  const { rankBy, poolSize, ...apiParams } = params;
+  const filters = resolved.filters as SearchParams['filters'];
+  const path = `/${platform}/search`;
+  const conversions = resolved.notes.length ? [`Converted to taxonomy IDs: ${resolved.notes.join('; ')}`] : [];
+
+  if (rankBy !== 'relevance') {
+    const result = await callApi(apiKey, path, {
+      method: 'POST',
+      body: withDefaultSort({ ...apiParams, filters }, defaultSort),
+    });
+    const formatted = formatToolResult(result);
+    return withNotes(formatted, [...conversions, ...emptyResultNote(formatted, filters.length)]);
+  }
+
+  const wanted = wantedSignals(filters);
+  if (!canRank(wanted)) {
+    return {
+      isError: true as const,
+      content: [{ type: 'text' as const, text: 'Error: VALIDATION_ERROR (no credits used)\nrankBy "relevance" needs at least two requested values across niches, topics and hashtags.' }],
+    };
+  }
+
+  // Fetch the pool with just the signals needed to count matches.
+  type Creator = { uniqueId?: string; channelId?: string; profile?: Record<string, unknown> } & Record<string, unknown>;
+  const pool: Creator[] = [];
+  let credits = 0;
+  let total: unknown;
+  let last: ApiResponse | undefined;
+  for (let offset = 0; offset < (poolSize ?? 200); offset += 100) {
+    last = await callApi(apiKey, path, {
+      method: 'POST',
+      body: withDefaultSort(
+        { ...apiParams, filters, pageSize: Math.min(100, (poolSize ?? 200) - offset), offset, fields: { profile: profileFieldsFor(wanted) } },
+        defaultSort,
+      ),
+    });
+    if (!last.success) return formatToolResult(last);
+    credits += last.creditsUsed ?? 0;
+    const data = last.data as { creatorList?: Creator[]; totalResults?: unknown; hasNextPage?: boolean };
+    total = data.totalResults;
+    pool.push(...(data.creatorList ?? []));
+    if (!data.hasNextPage) break;
+  }
+
+  const top = rankByMatches(pool as Array<Creator & { profile?: never }>, wanted).slice(0, params.pageSize);
+  let creatorList = top.map(({ creator, matchCount, matched }) => {
+    const { profile, ...rest } = creator as Creator;
+    return { ...rest, matchCount, matched };
+  });
+
+  // Caller-requested enrichment, for the top results only.
+  if (apiParams.fields && creatorList.length) {
+    const ids = creatorList.map((c) => (c as Creator).uniqueId).filter((v): v is string => !!v);
+    const res = await callApi(apiKey, path, {
+      method: 'POST',
+      body: { filters: [{ filterName: 'uniqueId', op: 'in', value: ids }], pageSize: ids.length, offset: 0, desc: true, sortBy: defaultSort, fields: apiParams.fields },
+    });
+    if (res.success) {
+      credits += res.creditsUsed ?? 0;
+      const byId = new Map(((res.data as { creatorList?: Creator[] }).creatorList ?? []).map((c) => [c.uniqueId, c]));
+      creatorList = creatorList.map((c) => ({ ...byId.get((c as Creator).uniqueId), ...c }));
+    }
+  }
+
+  const response: ApiResponse = {
+    ...(last as ApiResponse),
+    creditsUsed: Math.round(credits * 100) / 100,
+    data: { creatorList, totalResults: total, rankedBy: 'relevance', rankedPool: pool.length },
+  };
+  const formatted = formatToolResult(response);
+  const poolNote =
+    typeof total === 'number' && total > pool.length
+      ? [`Ranked the first ${pool.length} of ${total} matches (in ${apiParams.sortBy ?? defaultSort} order) by match count.`]
+      : [];
+  return withNotes(formatted, [...conversions, ...poolNote, ...emptyResultNote(formatted, filters.length)]);
+}
+
 export function registerSearchTools(server: McpServer, apiKey: string) {
   // Natural Language Search
   server.tool(
@@ -170,17 +283,7 @@ export function registerSearchTools(server: McpServer, apiKey: string) {
       '`hasNextPage`, `nextOffset` — pass nextOffset as the next request\'s offset to paginate. ' +
       'Results are sorted by totalSubscribers (descending) unless you pass your own `sortBy`.',
     searchBodySchema,
-    async (params) => {
-      const resolved = await resolveTaxonomyFilters('youtube', params.filters, apiTaxonomyLoader(apiKey));
-      if (!resolved.ok) return taxonomyIdError(resolved.message);
-      const result = await callApi(apiKey, '/youtube/search', {
-        method: 'POST',
-        body: withDefaultSort({ ...params, filters: resolved.filters }, 'totalSubscribers'),
-      });
-      const formatted = formatToolResult(result);
-      const conversions = resolved.notes.length ? [`Converted to taxonomy IDs: ${resolved.notes.join('; ')}`] : [];
-      return withNotes(formatted, [...conversions, ...emptyResultNote(formatted, params.filters.length)]);
-    },
+    async (params) => runSearch(apiKey, 'youtube', 'totalSubscribers', params),
   );
 
   // Instagram Search
@@ -192,17 +295,7 @@ export function registerSearchTools(server: McpServer, apiKey: string) {
       'case-insensitive. Response: `creatorList`, `totalResults`, `hasNextPage`, `nextOffset`. ' +
       'Results are sorted by totalFollowers (descending) unless you pass your own `sortBy`.',
     searchBodySchema,
-    async (params) => {
-      const resolved = await resolveTaxonomyFilters('instagram', params.filters, apiTaxonomyLoader(apiKey));
-      if (!resolved.ok) return taxonomyIdError(resolved.message);
-      const result = await callApi(apiKey, '/instagram/search', {
-        method: 'POST',
-        body: withDefaultSort({ ...params, filters: resolved.filters }, 'totalFollowers'),
-      });
-      const formatted = formatToolResult(result);
-      const conversions = resolved.notes.length ? [`Converted to taxonomy IDs: ${resolved.notes.join('; ')}`] : [];
-      return withNotes(formatted, [...conversions, ...emptyResultNote(formatted, params.filters.length)]);
-    },
+    async (params) => runSearch(apiKey, 'instagram', 'totalFollowers', params),
   );
 
   // TikTok Search
@@ -216,16 +309,6 @@ export function registerSearchTools(server: McpServer, apiKey: string) {
       'Response: `creatorList`, `totalResults`, `hasNextPage`, `nextOffset`. ' +
       'Results are sorted by totalFollowers (descending) unless you pass your own `sortBy`.',
     searchBodySchema,
-    async (params) => {
-      const resolved = await resolveTaxonomyFilters('tiktok', params.filters, apiTaxonomyLoader(apiKey));
-      if (!resolved.ok) return taxonomyIdError(resolved.message);
-      const result = await callApi(apiKey, '/tiktok/search', {
-        method: 'POST',
-        body: withDefaultSort({ ...params, filters: resolved.filters }, 'totalFollowers'),
-      });
-      const formatted = formatToolResult(result);
-      const conversions = resolved.notes.length ? [`Converted to taxonomy IDs: ${resolved.notes.join('; ')}`] : [];
-      return withNotes(formatted, [...conversions, ...emptyResultNote(formatted, params.filters.length)]);
-    },
+    async (params) => runSearch(apiKey, 'tiktok', 'totalFollowers', params),
   );
 }
