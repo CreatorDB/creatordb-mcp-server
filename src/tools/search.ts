@@ -68,6 +68,29 @@ const searchBodySchema = {
         'whose message enumerates every accepted field for that platform.',
     ),
   desc: z.boolean().default(true).describe('Sort descending (true) or ascending (false).'),
+  fields: z
+    .object({
+      profile: z.array(z.string()).optional(),
+      performance: z.array(z.string()).optional(),
+      audience: z.array(z.string()).optional(),
+      contact: z.array(z.string()).optional(),
+      'content-detail': z.record(z.number().int().min(0)).optional(),
+      'performance-history': z.object({ pastDayRange: z.string() }).optional(),
+      sponsorship: z.record(z.number().int().min(0)).optional(),
+    })
+    .optional()
+    .describe(
+      'OPTIONAL enrichment: add data from other endpoints to EACH result, billed per result ' +
+        'returned at that endpoint\'s fractional field prices (so cost scales with pageSize). Each ' +
+        'key is an endpoint name and takes that endpoint\'s `fields` shape: profile/performance/' +
+        'audience/contact take field-name arrays; content-detail takes per-item counts ' +
+        '(YouTube recentVideos/recentShorts, Instagram recentImages/recentReels, TikTok ' +
+        'recentVideos; 0.1 credit per item); sponsorship takes { sponsorList: n } (YouTube and ' +
+        'Instagram only); performance-history takes { pastDayRange: "90" }. An empty array or ' +
+        'object requests the full bundle at the endpoint\'s full price. Useful for checking fit ' +
+        'without a profile call per creator, e.g. { "profile": ["bio", "niches", "country", ' +
+        '"mainLanguage"], "content-detail": { "recentVideos": 3 } } = 0.7 credits per result.',
+    ),
 };
 
 /**
@@ -82,22 +105,42 @@ function withDefaultSort<T extends { sortBy?: string }>(params: T, defaultSortBy
   return params.sortBy ? params : { ...params, sortBy: defaultSortBy };
 }
 
-/** Append resolution notes so the agent sees which IDs its niche/topic names became. */
+/** Append notes after the result, e.g. which IDs niche/topic names became. */
+/**
+ * A search with no matches gets a note on how to widen it, so the agent loosens the query
+ * instead of reporting that no such creators exist.
+ */
+function emptyResultNote(result: { content: Array<{ type: 'text'; text: string }>; isError?: boolean }, filterCount: number): string[] {
+  if (result.isError) return [];
+  try {
+    const data = JSON.parse(result.content[0]?.text ?? '{}') as { totalResults?: number };
+    if (data.totalResults !== 0) return [];
+  } catch {
+    return [];
+  }
+  return [
+    `No creators match all ${filterCount} filters. Filters are exact and combined with AND, so one narrow ` +
+      'filter empties the result. Remove or loosen one at a time (hashtags, niches, engagement and ' +
+      'count thresholds are the usual causes). Hashtags match exact tags only. Location is ' +
+      'country-level; there is no state or city filter.',
+  ];
+}
+
 function withNotes<T extends { content: Array<{ type: 'text'; text: string }> }>(result: T, notes: string[]): T {
   if (!notes.length) return result;
-  return { ...result, content: [...result.content, { type: 'text' as const, text: `Converted to taxonomy IDs: ${notes.join('; ')}` }] };
+  return { ...result, content: [...result.content, ...notes.map((text) => ({ type: 'text' as const, text }))] };
 }
 
 export function registerSearchTools(server: McpServer, apiKey: string) {
   // Natural Language Search
   server.tool(
     'search_creators_nls',
-    'Search for creators using natural language across YouTube, Instagram, and TikTok. ' +
-      'The AI determines the platform from your query and converts it into structured filters. ' +
-      'Response includes `creatorList` AND a `platform` field telling you which platform was ' +
-      'chosen. Best for exploratory queries where you don\'t know exact filter names — fall back ' +
-      'to search_youtube/instagram/tiktok when you need precise control over filters. Credit cost ' +
-      'is dynamic (token-based, typically 1–10 credits).',
+    'Quick natural-language search: converts one sentence into filters in a single pass and ' +
+      'returns up to 20 creators. Results are NOT checked against the request and are often ' +
+      'loose, so do not use this to build a result list; use search_youtube, search_instagram ' +
+      'and search_tiktok instead. Use it only when the user explicitly asks for natural-language ' +
+      'search. Response includes `creatorList` and the `platform` chosen. Credit cost is dynamic ' +
+      '(token-based, typically 1–10 credits).',
     {
       description: z
         .string()
@@ -134,7 +177,9 @@ export function registerSearchTools(server: McpServer, apiKey: string) {
         method: 'POST',
         body: withDefaultSort({ ...params, filters: resolved.filters }, 'totalSubscribers'),
       });
-      return withNotes(formatToolResult(result), resolved.notes);
+      const formatted = formatToolResult(result);
+      const conversions = resolved.notes.length ? [`Converted to taxonomy IDs: ${resolved.notes.join('; ')}`] : [];
+      return withNotes(formatted, [...conversions, ...emptyResultNote(formatted, params.filters.length)]);
     },
   );
 
@@ -154,7 +199,9 @@ export function registerSearchTools(server: McpServer, apiKey: string) {
         method: 'POST',
         body: withDefaultSort({ ...params, filters: resolved.filters }, 'totalFollowers'),
       });
-      return withNotes(formatToolResult(result), resolved.notes);
+      const formatted = formatToolResult(result);
+      const conversions = resolved.notes.length ? [`Converted to taxonomy IDs: ${resolved.notes.join('; ')}`] : [];
+      return withNotes(formatted, [...conversions, ...emptyResultNote(formatted, params.filters.length)]);
     },
   );
 
@@ -176,7 +223,9 @@ export function registerSearchTools(server: McpServer, apiKey: string) {
         method: 'POST',
         body: withDefaultSort({ ...params, filters: resolved.filters }, 'totalFollowers'),
       });
-      return withNotes(formatToolResult(result), resolved.notes);
+      const formatted = formatToolResult(result);
+      const conversions = resolved.notes.length ? [`Converted to taxonomy IDs: ${resolved.notes.join('; ')}`] : [];
+      return withNotes(formatted, [...conversions, ...emptyResultNote(formatted, params.filters.length)]);
     },
   );
 }

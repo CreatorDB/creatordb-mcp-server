@@ -8,6 +8,8 @@ import { registerAccountTools } from './tools/account.js';
 import { registerResources } from './resources.js';
 import { TOOL_ANNOTATIONS } from './tool-annotations.js';
 
+export { SERVER_INSTRUCTIONS } from './instructions.js';
+
 type ToolFn = McpServer['tool'];
 
 /**

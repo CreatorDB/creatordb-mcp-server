@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
-import { registerAllTools } from './register-tools.js';
+import { registerAllTools, SERVER_INSTRUCTIONS } from './register-tools.js';
 
 const apiKey = process.env.CREATORDB_API_KEY;
 if (!apiKey) {
@@ -18,10 +18,13 @@ if (!apiKey) {
 const here = dirname(fileURLToPath(import.meta.url));
 const { version } = JSON.parse(readFileSync(join(here, '..', 'package.json'), 'utf8'));
 
-const server = new McpServer({
-  name: 'creatordb',
-  version,
-});
+const server = new McpServer(
+  {
+    name: 'creatordb',
+    version,
+  },
+  { instructions: SERVER_INSTRUCTIONS },
+);
 
 registerAllTools(server, apiKey);
 
