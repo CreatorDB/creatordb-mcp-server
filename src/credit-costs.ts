@@ -47,7 +47,7 @@ export const CREDIT_COST_ROWS: CreditCostRow[] = [
     group: 'Creator search',
     tool: 'search_{youtube,instagram,tiktok}',
     cost: '1 per 10 filters',
-    notes: 'ceil(filters / 10). Max 10 filters, max 100 results/page.',
+    notes: 'ceil(filters / 10). Max 10 filters, max 100 results/page. Optional `fields` enrichment adds that endpoint\'s fractional price per result returned.',
   },
   {
     group: 'Creator search',
