@@ -4,7 +4,7 @@
  * rather than an error, so an agent reads it as "no creators match" and moves on.
  *
  * Before a search reaches V3, names are converted to the IDs whose display name matches
- * exactly (ignoring case, spaces and punctuation). One name can map to several IDs; on
+ * exactly (ignoring case, spaces and punctuation), or to one category's ID for "Name/Category". One name can map to several IDs; on
  * YouTube "Canva" exists in three categories. A name with no exact match is not guessed:
  * the search returns an error listing the closest entries so the agent can choose.
  */
@@ -41,6 +41,19 @@ export function taxonomyPath(platform: Platform, field: TaxonomyField): string {
 
 function listTool(platform: Platform, field: TaxonomyField): string {
   return field === 'topics' ? 'list_youtube_topics' : `list_${platform}_niches`;
+}
+
+/**
+ * Entries whose display name matches `value`. The list tools show entries as "Name/Category"
+ * (e.g. "Vlog/People Blogs"), so that form narrows the match to one category.
+ */
+function matchName(items: TaxonomyItem[], value: string): TaxonomyItem[] {
+  const byName = (name: string) => items.filter((i) => i.id && i.name && normalize(i.name) === normalize(name));
+  const exact = byName(value);
+  if (exact.length || !value.includes('/')) return exact;
+  const slash = value.indexOf('/');
+  const category = normalize(value.slice(slash + 1));
+  return byName(value.slice(0, slash)).filter((i) => normalize(i.category ?? '') === category);
 }
 
 /** Taxonomies are the same for every caller and change slowly, so one copy per process is shared. */
@@ -97,7 +110,7 @@ export async function resolveTaxonomyFilters(
         ids.push(v);
         continue;
       }
-      const matches = loaded.items.filter((i) => i.id && i.name && normalize(i.name) === normalize(v));
+      const matches = matchName(loaded.items, v);
       if (matches.length) {
         ids.push(...matches.map((m) => m.id!));
         notes.push(`${field} "${v}" → ${matches.map((m) => m.id).join(', ')}`);
