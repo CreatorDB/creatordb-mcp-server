@@ -24,7 +24,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import { mcpAuthRouter } from '@modelcontextprotocol/sdk/server/auth/router.js';
 import { requireBearerAuth } from '@modelcontextprotocol/sdk/server/auth/middleware/bearerAuth.js';
-import { registerAllTools } from '@creatordbai/mcp-server/register-tools';
+import { registerAllTools, SERVER_INSTRUCTIONS } from '@creatordbai/mcp-server/register-tools';
 import { createProvider, mintAuthorizationCode } from './oauth-provider.js';
 
 const SERVER_NAME = 'creatordb';
@@ -140,7 +140,7 @@ function buildApp(secret: string) {
       return;
     }
 
-    const server = new McpServer({ name: SERVER_NAME, version: SERVER_VERSION });
+    const server = new McpServer({ name: SERVER_NAME, version: SERVER_VERSION }, { instructions: SERVER_INSTRUCTIONS });
     registerAllTools(server, apiKey);
     const transport = new StreamableHTTPServerTransport({
       sessionIdGenerator: undefined,
