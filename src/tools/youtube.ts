@@ -213,7 +213,7 @@ export function registerYoutubeTools(server: McpServer, apiKey: string) {
       '"Finance", "Health Education") spread across 16 categories. YOUTUBE-ONLY: Instagram and ' +
       'TikTok do not have a topic taxonomy. To see which topics a specific creator is classified ' +
       'under, use get_youtube_profile and read the `topics` field. Returns one page at a time, ' +
-      'largest topics first — pass `search` to resolve a phrase to topic names, or raise `offset` ' +
+      'largest topics first — pass `search` to resolve a phrase to topic IDs (use `id` as the search filter value, not `name`), or raise `offset` ' +
       'to page. Costs 1 credit per call regardless of page size.',
     taxonomyParams(
       'Restrict to one of the 16 YouTube categories (e.g. "Gaming", "Music", "Education"). ' +
@@ -230,7 +230,7 @@ export function registerYoutubeTools(server: McpServer, apiKey: string) {
       'niches a specific creator is classified under, use get_youtube_profile and read the ' +
       '`niches` field. Per-platform: YT/IG/TT each have their own niche taxonomy — they are not ' +
       'interchangeable. Returns one page at a time, largest niches first; pass `search` to resolve ' +
-      'a phrase to niche names rather than paging. Around 65% of entries have fewer than 100 ' +
+      'a phrase to niche IDs (use `id` as the search filter value, not `name`) rather than paging. Around 65% of entries have fewer than 100 ' +
       'creators, so `minChannelCount` is often worth setting. Costs 1 credit per call regardless ' +
       'of page size.',
     taxonomyParams(

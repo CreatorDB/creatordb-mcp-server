@@ -2,6 +2,7 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { callApi, callSseApi } from '../util/api-client.js';
 import { formatToolResult } from '../util/response.js';
+import { apiTaxonomyLoader, resolveTaxonomyFilters, taxonomyIdError } from '../util/taxonomy-ids.js';
 
 const filterSchema = z.object({
   filterName: z
@@ -11,7 +12,11 @@ const filterSchema = z.object({
         'alpha-3, e.g. "USA"), mainLanguage (ISO 639-3, e.g. "eng"), hashtags, niches, ' +
         'mainAudienceLocation, mainAudienceAge, mainAudienceGender, hasSponsors. ' +
         'Platform-specific count fields: YT uses totalSubscribers; IG/TT use totalFollowers. ' +
-        'YT-only: topics, isPodcast. Engagement fields exist on all three.',
+        'YT-only: topics, isPodcast. Engagement fields exist on all three. `niches` and `topics` take ' +
+        'taxonomy IDs (e.g. "id_canva_Education") from the `id` field of list_*_niches / ' +
+        'list_youtube_topics. A display name ("Canva") is converted to every ID with that exact ' +
+        'name (first lookup per taxonomy costs 1 credit, then cached); a name with no exact match ' +
+        'returns the closest IDs instead of searching.',
     ),
   op: z
     .enum(['>', '=', '<', 'in'])
@@ -77,6 +82,12 @@ function withDefaultSort<T extends { sortBy?: string }>(params: T, defaultSortBy
   return params.sortBy ? params : { ...params, sortBy: defaultSortBy };
 }
 
+/** Append resolution notes so the agent sees which IDs its niche/topic names became. */
+function withNotes<T extends { content: Array<{ type: 'text'; text: string }> }>(result: T, notes: string[]): T {
+  if (!notes.length) return result;
+  return { ...result, content: [...result.content, { type: 'text' as const, text: `Converted to taxonomy IDs: ${notes.join('; ')}` }] };
+}
+
 export function registerSearchTools(server: McpServer, apiKey: string) {
   // Natural Language Search
   server.tool(
@@ -117,11 +128,13 @@ export function registerSearchTools(server: McpServer, apiKey: string) {
       'Results are sorted by totalSubscribers (descending) unless you pass your own `sortBy`.',
     searchBodySchema,
     async (params) => {
+      const resolved = await resolveTaxonomyFilters('youtube', params.filters, apiTaxonomyLoader(apiKey));
+      if (!resolved.ok) return taxonomyIdError(resolved.message);
       const result = await callApi(apiKey, '/youtube/search', {
         method: 'POST',
-        body: withDefaultSort(params, 'totalSubscribers'),
+        body: withDefaultSort({ ...params, filters: resolved.filters }, 'totalSubscribers'),
       });
-      return formatToolResult(result);
+      return withNotes(formatToolResult(result), resolved.notes);
     },
   );
 
@@ -135,11 +148,13 @@ export function registerSearchTools(server: McpServer, apiKey: string) {
       'Results are sorted by totalFollowers (descending) unless you pass your own `sortBy`.',
     searchBodySchema,
     async (params) => {
+      const resolved = await resolveTaxonomyFilters('instagram', params.filters, apiTaxonomyLoader(apiKey));
+      if (!resolved.ok) return taxonomyIdError(resolved.message);
       const result = await callApi(apiKey, '/instagram/search', {
         method: 'POST',
-        body: withDefaultSort(params, 'totalFollowers'),
+        body: withDefaultSort({ ...params, filters: resolved.filters }, 'totalFollowers'),
       });
-      return formatToolResult(result);
+      return withNotes(formatToolResult(result), resolved.notes);
     },
   );
 
@@ -155,11 +170,13 @@ export function registerSearchTools(server: McpServer, apiKey: string) {
       'Results are sorted by totalFollowers (descending) unless you pass your own `sortBy`.',
     searchBodySchema,
     async (params) => {
+      const resolved = await resolveTaxonomyFilters('tiktok', params.filters, apiTaxonomyLoader(apiKey));
+      if (!resolved.ok) return taxonomyIdError(resolved.message);
       const result = await callApi(apiKey, '/tiktok/search', {
         method: 'POST',
-        body: withDefaultSort(params, 'totalFollowers'),
+        body: withDefaultSort({ ...params, filters: resolved.filters }, 'totalFollowers'),
       });
-      return formatToolResult(result);
+      return withNotes(formatToolResult(result), resolved.notes);
     },
   );
 }

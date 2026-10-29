@@ -212,7 +212,7 @@ export function registerTiktokTools(server: McpServer, apiKey: string) {
       'not interchangeable. TikTok does NOT have a "topics" taxonomy (that is YouTube-only) and ' +
       'does NOT have a per-brand sponsorship endpoint. The TikTok taxonomy is one flat list with ' +
       'no category structure, so paging through it is rarely useful — pass `search` to resolve a ' +
-      'phrase to niche names. Roughly 44% of entries have fewer than 100 creators, so ' +
+      'phrase to niche IDs (use `id` as the search filter value, not `name`). Roughly 44% of entries have fewer than 100 creators, so ' +
       '`minChannelCount` is often worth setting. Costs 1 credit per call regardless of page size.',
     taxonomyParams(
       'Inert on TikTok: every entry sits in a single "All" category. Present for consistency ' +
