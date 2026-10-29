@@ -18,7 +18,7 @@ export const SERVER_INSTRUCTIONS = [
   '4. Pool the results, drop duplicates, and keep only creators whose bio or recent content clearly shows the topic and who meet every stated requirement. Prefer creators that several searches found. If too few remain, search again with other terms.',
   'Keeping the user informed:',
   '- Before searching, tell the user your plan in one line and that a thorough search takes about 1-2 minutes.',
-  '- After gathering candidates, send one short progress note (how many candidates, and that you are checking which fit).',
+  '- Early results: as soon as your first one or two enriched searches are back (about 30 seconds in), share a preview of up to 5 creators that clearly fit so far, labelled as a preview, and say you are still checking more. Then continue the method and give the final list. A user who only needs a few can stop at the preview.',
   '- If the user asks for results quickly ("quick", "fast", "just a few", "right away"), skip the full method: run one or two searches with `fields`, keep the clear fits, answer within a few tool calls, say it was a quick pass, and offer the thorough search.',
   '- If the user asks for results partway through, share the best candidates found so far and say which have been checked.',
   '- When you answer, say what you searched for, any assumptions you made, and which parts of the request the data cannot check.',
