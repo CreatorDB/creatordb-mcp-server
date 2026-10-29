@@ -2,7 +2,7 @@
 
 A 5-minute setup for using CreatorDB's data inside Claude Code, Claude Desktop, or Cursor.
 
-This MCP server exposes **45 tools** that let Claude search the CreatorDB index of YouTube, Instagram, and TikTok creators and pull profile, performance, audience demographics, content, contact, sponsorship, and brand-side data — all from inside an AI conversation. No SaaS UI, no curl, no manual API calls.
+This MCP server exposes **43 tools** that let Claude search the CreatorDB index of YouTube, Instagram, and TikTok creators and pull profile, performance, audience demographics, content, contact, sponsorship, and brand-side data — all from inside an AI conversation. No SaaS UI, no curl, no manual API calls.
 
 ---
 
@@ -91,7 +91,7 @@ Until you do this, your client is running with no knowledge of the new MCP serve
 In any Claude Code or Claude Desktop session, type `/mcp`. You should see:
 
 ```
-creatordb · connected · 45 tools
+creatordb · connected · 43 tools
 ```
 
 If you see `failed` or `connecting…` stuck for more than 10 seconds, jump to Troubleshooting below.
@@ -106,11 +106,11 @@ You should get back display name, subscriber count, country, hashtags, related c
 
 ## What can you do with it?
 
-45 tools across six categories. A non-exhaustive sampler:
+43 tools across six categories. A non-exhaustive sampler:
 
 ### Find creators
 
-- **Natural language across platforms**: *"Find US-based YouTube beauty creators with over 5M subscribers"* — `search_creators_nls` (the AI picks the right platform and converts your prompt into structured filters)
+- **Plain-language requests**: *"Find US-based YouTube beauty creators with over 5M subscribers"* — your agent turns the request into filters for `search_youtube` / `search_instagram` / `search_tiktok`. `search_creators_nls` (CreatorDB's natural-language search) is available when you ask for it by name
 - **Structured filters per platform**: country, language, follower thresholds, niches, hashtags, audience demographics, sponsorship status — `search_youtube` / `search_instagram` / `search_tiktok`. Common YT field is `totalSubscribers`; IG/TT use `totalFollowers`. Each search costs 1 credit per 10 filters.
 
 ### Find individual posts (content search)
@@ -208,7 +208,7 @@ The three platforms have meaningful differences that the AI sometimes doesn't ca
 | `EACCES: permission denied` from npx | Cache permission issue | `rm -rf ~/.npm/_npx` and restart the client |
 | Network timeout fetching from npm | Behind a corporate proxy | Set `npm config set proxy http://your-proxy:port` |
 | `Error: ENOENT` or `cannot find dist/index.js` (Method 2 only) | Forgot `npm run build` after cloning | `cd` into the repo and run `npm install && npm run build` |
-| Behavior seems wrong but no error | Check `/mcp` to confirm `creatordb` is connected. If it shows fewer than 45 tools, you have an older cached version — see "Upgrading" below |
+| Behavior seems wrong but no error | Check `/mcp` to confirm `creatordb` is connected. If it shows fewer than 43 tools, you have an older cached version — see "Upgrading" below |
 
 If none of these match, send <hello@creatordb.app> a screenshot of `/mcp` output plus the failing message.
 
@@ -249,7 +249,7 @@ URL:  https://mcp.creatordb.app/mcp
 Auth: Authorization: Bearer <your CreatorDB V3 API key>
 ```
 
-In Claude web: **Settings → Connectors → Add custom connector** → paste the URL → provide your V3 API key as the Bearer token. The same 45 tools appear, identical to the local install.
+In Claude web: **Settings → Connectors → Add custom connector** → paste the URL → provide your V3 API key as the Bearer token. The same 43 tools appear, identical to the local install.
 
 Notes:
 - Your API key is read per-request; this endpoint keeps no separate copy of it. (CreatorDB stores the key itself as the credential it issued you, to validate each request.)
