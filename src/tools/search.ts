@@ -2,6 +2,7 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { callApi, callSseApi } from '../util/api-client.js';
 import { formatToolResult } from '../util/response.js';
+import { compactSearchEnrichment } from '../util/compact.js';
 import { apiTaxonomyLoader, resolveTaxonomyFilters, taxonomyIdError } from '../util/taxonomy-ids.js';
 
 const filterSchema = z.object({
@@ -89,7 +90,9 @@ const searchBodySchema = {
         'Instagram only); performance-history takes { pastDayRange: "90" }. An empty array or ' +
         'object requests the full bundle at the endpoint\'s full price. Useful for checking fit ' +
         'without a profile call per creator, e.g. { "profile": ["bio", "niches", "country", ' +
-        '"mainLanguage"], "content-detail": { "recentVideos": 3 } } = 0.7 credits per result.',
+        '"mainLanguage"], "content-detail": { "recentVideos": 3 } } = 0.7 credits per result. In search ' +
+        'results, long text is shortened (and very large pages trimmed further) to keep responses readable; ' +
+        'get_*_content_detail and get_*_profile return them in full.',
     ),
 };
 
@@ -177,9 +180,10 @@ export function registerSearchTools(server: McpServer, apiKey: string) {
         method: 'POST',
         body: withDefaultSort({ ...params, filters: resolved.filters }, 'totalSubscribers'),
       });
+      const shortened = result.success && params.fields ? compactSearchEnrichment(result.data) : null;
       const formatted = formatToolResult(result);
       const conversions = resolved.notes.length ? [`Converted to taxonomy IDs: ${resolved.notes.join('; ')}`] : [];
-      return withNotes(formatted, [...conversions, ...emptyResultNote(formatted, params.filters.length)]);
+      return withNotes(formatted, [...conversions, ...(shortened ? [shortened] : []), ...emptyResultNote(formatted, params.filters.length)]);
     },
   );
 
@@ -199,9 +203,10 @@ export function registerSearchTools(server: McpServer, apiKey: string) {
         method: 'POST',
         body: withDefaultSort({ ...params, filters: resolved.filters }, 'totalFollowers'),
       });
+      const shortened = result.success && params.fields ? compactSearchEnrichment(result.data) : null;
       const formatted = formatToolResult(result);
       const conversions = resolved.notes.length ? [`Converted to taxonomy IDs: ${resolved.notes.join('; ')}`] : [];
-      return withNotes(formatted, [...conversions, ...emptyResultNote(formatted, params.filters.length)]);
+      return withNotes(formatted, [...conversions, ...(shortened ? [shortened] : []), ...emptyResultNote(formatted, params.filters.length)]);
     },
   );
 
@@ -223,9 +228,10 @@ export function registerSearchTools(server: McpServer, apiKey: string) {
         method: 'POST',
         body: withDefaultSort({ ...params, filters: resolved.filters }, 'totalFollowers'),
       });
+      const shortened = result.success && params.fields ? compactSearchEnrichment(result.data) : null;
       const formatted = formatToolResult(result);
       const conversions = resolved.notes.length ? [`Converted to taxonomy IDs: ${resolved.notes.join('; ')}`] : [];
-      return withNotes(formatted, [...conversions, ...emptyResultNote(formatted, params.filters.length)]);
+      return withNotes(formatted, [...conversions, ...(shortened ? [shortened] : []), ...emptyResultNote(formatted, params.filters.length)]);
     },
   );
 }

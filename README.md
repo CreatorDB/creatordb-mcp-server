@@ -223,7 +223,9 @@ The workflow validates that the tag matches `package.json` `version`, runs `npm 
 
 **Empty results:** a search with no matches returns a note on how to widen it.
 
-**Server instructions:** the server sends instructions at connect time describing how the data works (exact filters, taxonomy IDs, country-level location) and the search method that returns the most relevant creators: gather candidates with several searches that use different topic signals and sort orders, enrich them with `fields`, then keep only creators whose own content shows they fit. A thorough search this way typically uses 50-150 credits. Clients connected before an update see new instructions after reconnecting.
+**Server instructions:** the server sends instructions at connect time describing how the data works (exact filters, taxonomy IDs, country-level location) and the search method that returns the most relevant creators: gather candidates with several searches that use different topic signals and sort orders, enrich them with `fields`, then keep only creators whose own content shows they fit. A thorough search this way typically uses 50-150 credits. Agents state their plan before searching, share a preview of clear fits when early results allow, and take a quick path (one or two searches) when the user asks for speed. Clients connected before an update see new instructions after reconnecting.
+
+**Result size:** enriched search results are shortened in steps to stay within what MCP clients show to the model (long descriptions and bios first, then top-10 hashtag and niche lists, then recent posts reduced to their essentials). The result says what was shortened; `get_*_profile` and `get_*_content_detail` return full text. Tool results are compact JSON.
 
 **Filter value notes:** hashtag values match with or without a leading `#` and are case-insensitive. Ratio and percentile fields (`audienceMaleRatio`, `audienceFemaleRatio`, and YouTube's `*Percentile` fields) take a decimal from 0 to 1, not 0-100: `0.6` = 60%, `0.9` = top 10%.
 

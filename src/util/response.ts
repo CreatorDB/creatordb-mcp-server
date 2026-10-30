@@ -37,7 +37,7 @@ export function formatToolResult(response: ApiResponse) {
     content: [
       {
         type: 'text' as const,
-        text: JSON.stringify(response.data, null, 2),
+        text: JSON.stringify(response.data),
       },
       {
         type: 'text' as const,
