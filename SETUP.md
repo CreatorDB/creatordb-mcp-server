@@ -2,7 +2,7 @@
 
 A 5-minute setup for using CreatorDB's data inside Claude Code, Claude Desktop, or Cursor.
 
-This MCP server exposes **43 tools** that let Claude search the CreatorDB index of YouTube, Instagram, and TikTok creators and pull profile, performance, audience demographics, content, contact, sponsorship, and brand-side data — all from inside an AI conversation. No SaaS UI, no curl, no manual API calls.
+This MCP server exposes **45 tools** that let Claude search the CreatorDB index of YouTube, Instagram, and TikTok creators and pull profile, performance, audience demographics, content, contact, sponsorship, and brand-side data — all from inside an AI conversation. No SaaS UI, no curl, no manual API calls.
 
 ---
 
@@ -91,7 +91,7 @@ Until you do this, your client is running with no knowledge of the new MCP serve
 In any Claude Code or Claude Desktop session, type `/mcp`. You should see:
 
 ```
-creatordb · connected · 43 tools
+creatordb · connected · 45 tools
 ```
 
 If you see `failed` or `connecting…` stuck for more than 10 seconds, jump to Troubleshooting below.
@@ -106,7 +106,7 @@ You should get back display name, subscriber count, country, hashtags, related c
 
 ## What can you do with it?
 
-43 tools across six categories. A non-exhaustive sampler:
+45 tools across six categories. A non-exhaustive sampler:
 
 ### Find creators
 
@@ -117,11 +117,11 @@ You should get back display name, subscriber count, country, hashtags, related c
 
 Different from creator search — this returns videos / reels / images / shorts / TikToks rather than channels. Useful for trend analysis, campaign-style sweeps, or sponsorship discovery at the content level.
 
-- **YouTube videos / shorts / streams** — `search_youtube_content`. Filterable by `publishTime` (days ago), `views`, `likes`, `comments`, `engagement`, `lengthSec`, `isSponsored`, `partneredBrands`, `language`, `category`, and creator-level fields (country, niches, topics, etc.). Returns title, thumbnail, URL, hashtags, sponsorship flags, plus a nested creator block.
-- **Instagram images / reels / slideshows** — `search_instagram_content`. No `views` or `lengthSec` (IG data model limit). Description filter searches caption AND reel title together. `isSponsored` filter respects the `partneredBrands` index.
-- **TikTok videos** — `search_tiktok_content`. Filterable by `plays`, `diggs` (likes), `comments`, `shares`, `engagement`, `lengthSec`. **No `isSponsored` / `partneredBrands` filter** — TikTok brand-attribution isn't implemented yet on the V3 side.
+- **YouTube videos / shorts / streams** — `search_youtube_content`. Filterable by `postType`, `title`, `description` (the video description), `hashtag`, `views`, `likes`, `comments`, `engagement`, `lengthSec`, `isSponsored`, `partneredBrands`, `language`, `category`, `channelId` (one channel's content), and creator-level fields (country, niches, topics, followers, etc.). Returns title, thumbnail, URL, hashtags, sponsorship flags, plus a nested creator block.
+- **Instagram reels / image posts / slideshows** — `search_instagram_content`. Filterable by `postType`, `description` (the caption), `hashtag`, `likes`, `comments`, `engagement`, `isSponsored`, `partneredBrands`, `uniqueId` (one creator's posts), and creator-level fields. No `views`; `lengthSec` only on reels and videos.
+- **TikTok videos** — `search_tiktok_content`. Filterable by `description`, `hashtag`, `plays`, `diggs` (likes), `comments`, `shares`, `engagement`, `lengthSec`, `uniqueId` (one creator's videos), and creator-level fields. **No `isSponsored` / `partneredBrands` filter** — TikTok brand-attribution isn't implemented yet on the V3 side.
 
-Common pattern across all three: filter values for numeric ops must be numbers, not numeric strings; hashtag values on IG/TT need a `#` prefix. Each content-search call costs 2 credits per page.
+Common pattern across all three: with no `timeRange` (or `publishTime` filter) a search covers the last 30 days; pass `timeRange` {from, to} in Unix ms for any other window. `isFuzzySearch` works only on free-text filters (captions, titles, hashtags, creator name and bio), and `in` + fuzzy matches any of up to 10 phrases. Filter values for numeric ops must be numbers, not numeric strings; hashtag values on IG/TT need a `#` prefix. Each call has a fixed price from a grid: a shorter window, a `followers > 100000` filter or a narrower `postType` costs less, a `description` filter costs more (e.g. a 30-day caption search is 17 on YouTube and Instagram, 4 on TikTok). Empty results are still charged; the exact charge is in `creditsUsed`.
 
 ### Pull data on a known creator
 
@@ -208,7 +208,7 @@ The three platforms have meaningful differences that the AI sometimes doesn't ca
 | `EACCES: permission denied` from npx | Cache permission issue | `rm -rf ~/.npm/_npx` and restart the client |
 | Network timeout fetching from npm | Behind a corporate proxy | Set `npm config set proxy http://your-proxy:port` |
 | `Error: ENOENT` or `cannot find dist/index.js` (Method 2 only) | Forgot `npm run build` after cloning | `cd` into the repo and run `npm install && npm run build` |
-| Behavior seems wrong but no error | Check `/mcp` to confirm `creatordb` is connected. If it shows fewer than 43 tools, you have an older cached version — see "Upgrading" below |
+| Behavior seems wrong but no error | Check `/mcp` to confirm `creatordb` is connected. If it shows fewer than 45 tools, you have an older cached version — see "Upgrading" below |
 
 If none of these match, send <hello@creatordb.app> a screenshot of `/mcp` output plus the failing message.
 
@@ -249,7 +249,7 @@ URL:  https://mcp.creatordb.app/mcp
 Auth: Authorization: Bearer <your CreatorDB V3 API key>
 ```
 
-In Claude web: **Settings → Connectors → Add custom connector** → paste the URL → provide your V3 API key as the Bearer token. The same 43 tools appear, identical to the local install.
+In Claude web: **Settings → Connectors → Add custom connector** → paste the URL → provide your V3 API key as the Bearer token. The same 45 tools appear, identical to the local install.
 
 Notes:
 - Your API key is read per-request; this endpoint keeps no separate copy of it. (CreatorDB stores the key itself as the credential it issued you, to validate each request.)

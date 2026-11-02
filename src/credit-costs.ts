@@ -19,6 +19,11 @@
  * injecting a real unindexed creator into the scrape queue. Every other row still
  * carries its 2026-08-10 verification.
  *
+ * RE-VERIFIED 2026-11-02 — the content-search rows. The new content search launched
+ * that day on all three platforms with a fixed price grid (window length x description
+ * filter x followers floor x content type); the ranges and examples here are the grid's
+ * cells, spot-checked live (YT/IG 30-day description 17, TT 4, TT hashtag 30-day 2).
+ *
  * The exact charge for any call is ALWAYS returned as `creditsUsed` in the
  * response envelope; this table is the up-front estimate so an agent can budget
  * before spending. Keep it in sync with the "Costs N credits" sentence in each
@@ -29,6 +34,9 @@ export const CREDIT_COSTS_VERIFIED_ON = '2026-08-10';
 
 /** The submit rows were re-verified separately after API-308 / API-309 shipped. */
 export const SUBMIT_REVERIFIED_ON = '2026-08-17';
+
+/** The content-search rows were re-verified when the grid-priced content search launched. */
+export const CONTENT_SEARCH_REVERIFIED_ON = '2026-11-02';
 
 export interface CreditCostRow {
   /** Section heading the row is grouped under. */
@@ -59,8 +67,21 @@ export const CREDIT_COST_ROWS: CreditCostRow[] = [
   // ── Content search (individual posts, not creators) ────────────────────────
   {
     group: 'Content search (individual posts)',
+    tool: 'search_youtube_content',
+    cost: '1–97 (grid)',
+    notes: 'Fixed price per call, not per result. Any content type, all creators: last 7 days 1 (7 with a `description` filter), last 30 days 3 (17), up to 90 days 5 (32). A `followers > 100000` filter or `postType` shorts-only / video-only costs less. No window = last 30 days. Empty results are charged.',
+  },
+  {
+    group: 'Content search (individual posts)',
+    tool: 'search_instagram_content',
+    cost: '1–92 (grid)',
+    notes: 'Fixed price per call, not per result. Any content type, all creators: last 7 days 1 (6 with a `description` filter), last 30 days 4 (17), up to 90 days 8 (33). A `followers > 100000` filter or `postType` reel-only / posts-only costs less. No window = last 30 days. Empty results are charged.',
+  },
+  {
+    group: 'Content search (individual posts)',
     tool: 'search_tiktok_content',
-    cost: '2 / page',
+    cost: '1–28 (grid)',
+    notes: 'Fixed price per call, not per result. All creators: last 7 days 1 (1 with a `description` filter), last 30 days 2 (4), up to 90 days 5 (9). A `followers > 100000` filter costs less. No window = last 30 days. Empty results are charged.',
   },
 
   // ── Creator profile & analytics (mostly POST + fractional `fields`; ─────────
@@ -204,7 +225,8 @@ ${sections}
 ---
 _Costs verified against the live CreatorDB V3 API on ${CREDIT_COSTS_VERIFIED_ON}; the
 creator-submit rows re-verified ${SUBMIT_REVERIFIED_ON} after submission became free
-(API-308) and the daily cap rose to 10,000 (API-309). If a call's \`creditsUsed\` ever
+(API-308) and the daily cap rose to 10,000 (API-309); the content-search rows re-verified
+${CONTENT_SEARCH_REVERIFIED_ON} when the grid-priced content search launched. If a call's \`creditsUsed\` ever
 disagrees with this table, trust \`creditsUsed\` and report the drift._
 `;
 }
