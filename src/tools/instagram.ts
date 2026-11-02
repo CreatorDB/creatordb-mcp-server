@@ -229,8 +229,7 @@ export function registerInstagramTools(server: McpServer, apiKey: string) {
       'channelCount per niche. NICHES are granular subcategories (e.g. "love/All", "fashion/All"). ' +
       'To see which niches a specific creator is classified under, use get_instagram_profile and ' +
       'read the `niches` field. Per-platform: IG/YT/TT each have their own niche taxonomy — they ' +
-      'are not interchangeable. Instagram does NOT have a "topics" taxonomy (that is ' +
-      'YouTube-only). The Instagram taxonomy is one flat list with no category structure, so ' +
+      'are not interchangeable. For the coarser topic taxonomy, use list_instagram_topics. The Instagram taxonomy is one flat list with no category structure, so ' +
       'paging through it is rarely useful — pass `search` to resolve a phrase to niche IDs (use `id` as the search filter value, not `name`). ' +
       'Costs 1 credit per call regardless of page size.',
     taxonomyParams(
@@ -238,6 +237,23 @@ export function registerInstagramTools(server: McpServer, apiKey: string) {
         'with the YouTube taxonomy tools.',
     ),
     async (args) => runTaxonomyTool(apiKey, '/instagram/niches', args),
+  );
+
+  server.tool(
+    'list_instagram_topics',
+    'Browse or search the Instagram TOPIC taxonomy used by CreatorDB (~490 entries) with ' +
+      'channelCount per topic. It is the same coarse classification as list_youtube_topics (e.g. ' +
+      '"Beauty", "Fashion", "Fitness") across 16 categories, with Instagram-specific IDs ending in ' +
+      '`_instagram` and Instagram creator counts. Use these IDs (not the YouTube ones) for the `topics` filter ' +
+      'on search_instagram. To see which topics a specific creator is classified under, use ' +
+      'get_instagram_profile and read the `topics` field. Profile `topics` may list IDs without the `_instagram` suffix; search accepts both forms. Returns one page at a time, largest ' +
+      'topics first — pass `search` to resolve a phrase to topic IDs (use `id` as the search filter ' +
+      'value, not `name`), or raise `offset` to page. Costs 1 credit per call regardless of page size.',
+    taxonomyParams(
+      'Restrict to one of the 16 topic categories (e.g. "Howto & Style", "Gaming"). ' +
+        'Matched case-insensitively.',
+    ),
+    async (args) => runTaxonomyTool(apiKey, '/instagram/topics', args),
   );
 
   server.tool(

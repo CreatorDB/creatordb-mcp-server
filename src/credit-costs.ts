@@ -137,9 +137,9 @@ export const CREDIT_COST_ROWS: CreditCostRow[] = [
   },
   {
     group: 'Taxonomies',
-    tool: 'list_youtube_topics',
+    tool: 'list_{youtube,instagram,tiktok}_topics',
     cost: '1',
-    notes: 'YouTube only (IG/TT have no topic taxonomy).',
+    notes: 'Same taxonomy on every platform; IDs end in the platform (_youtube, _instagram, _tiktok).',
   },
 
   // ── YouTube subtitles ──────────────────────────────────────────────────────

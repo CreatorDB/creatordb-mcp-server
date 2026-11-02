@@ -59,3 +59,13 @@ test('content-search descriptions state the 30-day default and grid price, not a
     assert.doesNotMatch(description, /per page/);
   }
 });
+
+test('topic list tools register on every platform with annotations', () => {
+  const tools = collectTools();
+  for (const platform of ['youtube', 'instagram', 'tiktok']) {
+    const name = `list_${platform}_topics`;
+    assert.ok(tools.has(name), `${name} is registered`);
+    assert.ok(TOOL_ANNOTATIONS[name], `${name} has annotations`);
+    assert.ok(!/do not have a topic taxonomy|NOT have a "topics"/i.test([...tools.values()].map((t) => t.description).join(' ')));
+  }
+});

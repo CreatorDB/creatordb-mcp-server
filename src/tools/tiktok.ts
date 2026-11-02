@@ -199,7 +199,7 @@ export function registerTiktokTools(server: McpServer, apiKey: string) {
       'channelCount per niche. NICHES are granular subcategories (e.g. "Capcut/All", "Dance/All"). ' +
       'To see which niches a specific creator is classified under, use get_tiktok_profile and read ' +
       'the `niches` field. Per-platform: TT/YT/IG each have their own niche taxonomy — they are ' +
-      'not interchangeable. TikTok does NOT have a "topics" taxonomy (that is YouTube-only) and ' +
+      'not interchangeable. For the coarser topic taxonomy, use list_tiktok_topics. TikTok ' +
       'does NOT have a per-brand sponsorship endpoint. The TikTok taxonomy is one flat list with ' +
       'no category structure, so paging through it is rarely useful — pass `search` to resolve a ' +
       'phrase to niche IDs (use `id` as the search filter value, not `name`). Roughly 44% of entries have fewer than 100 creators, so ' +
@@ -209,6 +209,23 @@ export function registerTiktokTools(server: McpServer, apiKey: string) {
         'with the YouTube taxonomy tools.',
     ),
     async (args) => runTaxonomyTool(apiKey, '/tiktok/niches', args),
+  );
+
+  server.tool(
+    'list_tiktok_topics',
+    'Browse or search the TikTok TOPIC taxonomy used by CreatorDB (~490 entries) with ' +
+      'channelCount per topic. It is the same coarse classification as list_youtube_topics (e.g. ' +
+      '"Beauty", "Fashion", "Fitness") across 16 categories, with TikTok-specific IDs ending in ' +
+      '`_tiktok` and TikTok creator counts. Use these IDs (not the YouTube ones) for the `topics` filter ' +
+      'on search_tiktok. To see which topics a specific creator is classified under, use ' +
+      'get_tiktok_profile and read the `topics` field. Returns one page at a time, largest ' +
+      'topics first — pass `search` to resolve a phrase to topic IDs (use `id` as the search filter ' +
+      'value, not `name`), or raise `offset` to page. Costs 1 credit per call regardless of page size.',
+    taxonomyParams(
+      'Restrict to one of the 16 topic categories (e.g. "Howto & Style", "Gaming"). ' +
+        'Matched case-insensitively.',
+    ),
+    async (args) => runTaxonomyTool(apiKey, '/tiktok/topics', args),
   );
 
   server.tool(

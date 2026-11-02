@@ -72,6 +72,8 @@ export const TOOL_ANNOTATIONS: Record<string, ToolAnnotations> = {
   search_youtube_content: read('Search YouTube Content'),
   list_youtube_niches: read('List YouTube Niches'),
   list_youtube_topics: read('List YouTube Topics'),
+  list_instagram_topics: read('List Instagram Topics'),
+  list_tiktok_topics: read('List TikTok Topics'),
   submit_youtube_creators: submit('Submit YouTube Creators for Indexing'),
 
   // cross-platform search

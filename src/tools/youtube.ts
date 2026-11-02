@@ -209,10 +209,11 @@ export function registerYoutubeTools(server: McpServer, apiKey: string) {
 
   server.tool(
     'list_youtube_topics',
-    'Browse or search the YouTube TOPIC taxonomy used by CreatorDB (~470 entries) with ' +
+    'Browse or search the YouTube TOPIC taxonomy used by CreatorDB (~490 entries) with ' +
       'channelCount per topic. TOPICS are a coarse, evolving classification (e.g. "Academic", ' +
-      '"Finance", "Health Education") spread across 16 categories. YOUTUBE-ONLY: Instagram and ' +
-      'TikTok do not have a topic taxonomy. To see which topics a specific creator is classified ' +
+      '"Finance", "Health Education") spread across 16 categories. Instagram and TikTok use the same ' +
+      'taxonomy with their own IDs and counts (list_instagram_topics, list_tiktok_topics); IDs end in ' +
+      'the platform (`_youtube`), so they are not interchangeable across platforms. To see which topics a specific creator is classified ' +
       'under, use get_youtube_profile and read the `topics` field. Returns one page at a time, ' +
       'largest topics first — pass `search` to resolve a phrase to topic IDs (use `id` as the search filter value, not `name`), or raise `offset` ' +
       'to page. Costs 1 credit per call regardless of page size.',
