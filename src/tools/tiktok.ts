@@ -4,6 +4,7 @@ import { callApi } from '../util/api-client.js';
 import { formatToolResult } from '../util/response.js';
 import { normalizeHandle } from '../util/handle.js';
 import { taxonomyParams, runTaxonomyTool } from '../util/taxonomy-tool.js';
+import { CONTENT_SEARCH_RULES, contentSearchParams } from './content-search.js';
 
 const uniqueIdParam = {
   uniqueId: z
@@ -150,34 +151,23 @@ export function registerTiktokTools(server: McpServer, apiKey: string) {
 
   server.tool(
     'search_tiktok_content',
-    'Search individual TikTok content (videos) across CreatorDB\'s index. Different from ' +
-      'search_tiktok (which searches CREATORS) — this returns individual posts. Response ' +
-      'includes `contentList[]` with contentId, description, thumbnail, url, publishTime ' +
-      '(Unix-ms), lengthSec, plays/likes/comments/shares/engagementRate, hashtags, audioTitle, ' +
-      'audioAuthor, and a nested creator block. NO contentType field. NO isSponsored / ' +
-      'partneredBrands — TikTok brand-attribution is not implemented (native isAd flag exists on ' +
-      'get_tiktok_content_detail only). Content-level filterable: description, hashtag, ' +
-      'publishTime (integer "days ago"), plays, diggs (request name) / likes (response name), ' +
-      'comments, shares, engagement, lengthSec, performanceDiggs, performanceEngagement. ' +
-      'Creator-level filters also supported. Engagement formula = (likes + comments + shares) / ' +
-      'plays. Costs 2 credits per page.',
+    'Search individual TikTok videos across CreatorDB\'s index. Different from search_tiktok (which ' +
+      'searches CREATORS): this returns individual videos. Response: `contentList[]` with contentId, ' +
+      'description, thumbnail, url, publishTime (Unix ms), lengthSec, plays, likes, comments, shares, ' +
+      'engagementRate, hashtags, audioTitle, audioAuthor and a nested creator block; plus totalResults, ' +
+      'hasNextPage, nextOffset and timeRange. No contentType, isSponsored or partneredBrands (TikTok brand ' +
+      'attribution is not implemented). Content filters: description, hashtag (with "#"), publishTime ' +
+      '(days ago), plays, diggs (= likes), comments, shares, engagement, lengthSec, performanceDiggs, ' +
+      'performanceEngagement. Creator filters: uniqueId (one creator\'s videos), creatorDisplayName, ' +
+      'creatorBio, country, creatorLanguage, creatorCategory, contentTopics, contentNiches, followers, ' +
+      'avgEngagement, isVerified, audienceLocation, audienceAvgAge, audienceMaleRatio, audienceFemaleRatio. ' +
+      'Free-text (fuzzy) filters: description, hashtag, creatorDisplayName, creatorBio. Engagement = ' +
+      '(likes + comments + shares) / plays. Typical prices (all creators / with followers > 100000): ' +
+      'last 7 days 1 / 1; last 30 days 2 / 1, or 4 / 2 with a description filter; up to 90 days 5 / 1, ' +
+      'or 9 / 2 with description.' +
+      CONTENT_SEARCH_RULES,
     {
-      filters: z
-        .array(
-          z.object({
-            filterName: z.string().describe('Field to filter on. See description for full list.'),
-            op: z.enum(['>', '=', '<', 'in']).describe('Comparison operator.'),
-            value: z
-              .union([z.string(), z.number(), z.boolean(), z.array(z.string()).max(100)])
-              .describe('Filter value (type must match the field).'),
-            isFuzzySearch: z.boolean().default(false).describe('Fuzzy matching for string fields.'),
-          }),
-        )
-        .min(1)
-        .max(10)
-        .describe('Content filters (1–10).'),
-      pageSize: z.number().min(1).max(100).default(20).describe('Results per page (max 100).'),
-      offset: z.number().min(0).default(0).describe('Number of records to skip for pagination.'),
+      ...contentSearchParams,
       sortBy: z
         .enum([
           'publishTime',
@@ -189,10 +179,10 @@ export function registerTiktokTools(server: McpServer, apiKey: string) {
           'lengthSec',
           'performanceDiggs',
           'performanceEngagement',
+          'followers',
         ])
         .default('publishTime')
-        .describe('Sort field.'),
-      desc: z.boolean().default(true).describe('Sort descending (true) or ascending (false).'),
+        .describe('Sort field. `diggs` sorts by likes.'),
     },
     async (params) => {
       const result = await callApi(apiKey, '/tiktok/content-search', {
@@ -209,7 +199,7 @@ export function registerTiktokTools(server: McpServer, apiKey: string) {
       'channelCount per niche. NICHES are granular subcategories (e.g. "Capcut/All", "Dance/All"). ' +
       'To see which niches a specific creator is classified under, use get_tiktok_profile and read ' +
       'the `niches` field. Per-platform: TT/YT/IG each have their own niche taxonomy — they are ' +
-      'not interchangeable. TikTok does NOT have a "topics" taxonomy (that is YouTube-only) and ' +
+      'not interchangeable. For the coarser topic taxonomy, use list_tiktok_topics. TikTok ' +
       'does NOT have a per-brand sponsorship endpoint. The TikTok taxonomy is one flat list with ' +
       'no category structure, so paging through it is rarely useful — pass `search` to resolve a ' +
       'phrase to niche IDs (use `id` as the search filter value, not `name`). Roughly 44% of entries have fewer than 100 creators, so ' +
@@ -219,6 +209,23 @@ export function registerTiktokTools(server: McpServer, apiKey: string) {
         'with the YouTube taxonomy tools.',
     ),
     async (args) => runTaxonomyTool(apiKey, '/tiktok/niches', args),
+  );
+
+  server.tool(
+    'list_tiktok_topics',
+    'Browse or search the TikTok TOPIC taxonomy used by CreatorDB (~490 entries) with ' +
+      'channelCount per topic. It is the same coarse classification as list_youtube_topics (e.g. ' +
+      '"Beauty", "Fashion", "Fitness") across 16 categories, with TikTok-specific IDs ending in ' +
+      '`_tiktok` and TikTok creator counts. Use these IDs (not the YouTube ones) for the `topics` filter ' +
+      'on search_tiktok. To see which topics a specific creator is classified under, use ' +
+      'get_tiktok_profile and read the `topics` field. Returns one page at a time, largest ' +
+      'topics first — pass `search` to resolve a phrase to topic IDs (use `id` as the search filter ' +
+      'value, not `name`), or raise `offset` to page. Costs 1 credit per call regardless of page size.',
+    taxonomyParams(
+      'Restrict to one of the 16 topic categories (e.g. "Howto & Style", "Gaming"). ' +
+        'Matched case-insensitively.',
+    ),
+    async (args) => runTaxonomyTool(apiKey, '/tiktok/topics', args),
   );
 
   server.tool(

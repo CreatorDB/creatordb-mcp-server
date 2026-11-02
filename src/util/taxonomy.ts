@@ -1,6 +1,6 @@
 /**
  * Shared paging + lexical search for the taxonomy tools
- * (`list_{youtube,instagram,tiktok}_niches`, `list_youtube_topics`).
+ * (`list_{youtube,instagram,tiktok}_niches`, `list_{youtube,instagram,tiktok}_topics`).
  *
  * WHY THIS EXISTS
  * The V3 `/{platform}/niches` endpoints take no parameters and return the whole

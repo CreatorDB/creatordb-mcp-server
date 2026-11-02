@@ -36,11 +36,11 @@ const isTaxonomyField = (name: string): name is TaxonomyField => name === 'niche
 const normalize = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, '');
 
 export function taxonomyPath(platform: Platform, field: TaxonomyField): string {
-  return field === 'topics' ? '/youtube/topics' : `/${platform}/niches`;
+  return `/${platform}/${field}`;
 }
 
 function listTool(platform: Platform, field: TaxonomyField): string {
-  return field === 'topics' ? 'list_youtube_topics' : `list_${platform}_niches`;
+  return `list_${platform}_${field}`;
 }
 
 /**
