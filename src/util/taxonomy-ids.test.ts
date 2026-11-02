@@ -9,12 +9,16 @@ const YT: TaxonomyItem[] = [
   { id: 'id_videoediting_Education', name: 'VideoEditing', category: 'Education', channelCount: 400 },
   { id: 'id_editing_Education', name: 'Editing', category: 'Education', channelCount: 300 },
 ];
-const TOPICS: TaxonomyItem[] = [{ id: 'id_fashion_HowtoStyle_youtube', name: 'Fashion', channelCount: 29458 }];
+const TOPICS: Record<string, TaxonomyItem[]> = {
+  '/youtube/topics': [{ id: 'id_fashion_HowtoStyle_youtube', name: 'Fashion', channelCount: 29458 }],
+  '/instagram/topics': [{ id: 'id_fashion_HowtoStyle_instagram', name: 'Fashion', channelCount: 120000 }],
+  '/tiktok/topics': [{ id: 'id_fashion_HowtoStyle_tiktok', name: 'Fashion', channelCount: 90000 }],
+};
 
 function loader(calls: string[] = []): TaxonomyLoader {
   return async (path) => {
     calls.push(path);
-    return { items: path === '/youtube/topics' ? TOPICS : YT, creditsUsed: 1 };
+    return { items: TOPICS[path] ?? YT, creditsUsed: 1 };
   };
 }
 
@@ -56,6 +60,16 @@ test('resolves topics against the topic taxonomy', async () => {
   assert.deepEqual(r.filters[0]!.value, ['id_fashion_HowtoStyle_youtube']);
   assert.deepEqual(calls, ['/youtube/topics']);
 });
+
+for (const platform of ['instagram', 'tiktok'] as const) {
+  test(`resolves ${platform} topics against the ${platform} topic taxonomy`, async () => {
+    const calls: string[] = [];
+    const r = await resolveTaxonomyFilters(platform, [{ filterName: 'topics', op: 'in', value: ['Fashion'] }], loader(calls));
+    assert.ok(r.ok);
+    assert.deepEqual(r.filters[0]!.value, [`id_fashion_HowtoStyle_${platform}`]);
+    assert.deepEqual(calls, [`/${platform}/topics`]);
+  });
+}
 
 test('does not guess: an unmatched name returns the closest entries', async () => {
   const r = await resolveTaxonomyFilters('youtube', [{ filterName: 'niches', op: 'in', value: ['Editing Tips'] }], loader());

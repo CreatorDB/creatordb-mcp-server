@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { BASE_URL, callApi } from '../util/api-client.js';
 import { formatToolResult } from '../util/response.js';
 import { taxonomyParams, runTaxonomyTool } from '../util/taxonomy-tool.js';
+import { CONTENT_SEARCH_RULES, contentSearchParams } from './content-search.js';
 
 const channelLookupParam = {
   channelId: z
@@ -208,10 +209,11 @@ export function registerYoutubeTools(server: McpServer, apiKey: string) {
 
   server.tool(
     'list_youtube_topics',
-    'Browse or search the YouTube TOPIC taxonomy used by CreatorDB (~470 entries) with ' +
+    'Browse or search the YouTube TOPIC taxonomy used by CreatorDB (~490 entries) with ' +
       'channelCount per topic. TOPICS are a coarse, evolving classification (e.g. "Academic", ' +
-      '"Finance", "Health Education") spread across 16 categories. YOUTUBE-ONLY: Instagram and ' +
-      'TikTok do not have a topic taxonomy. To see which topics a specific creator is classified ' +
+      '"Finance", "Health Education") spread across 16 categories. Instagram and TikTok use the same ' +
+      'taxonomy with their own IDs and counts (list_instagram_topics, list_tiktok_topics); the IDs ' +
+      'are platform-specific, so they are not interchangeable across platforms. To see which topics a specific creator is classified ' +
       'under, use get_youtube_profile and read the `topics` field. Returns one page at a time, ' +
       'largest topics first — pass `search` to resolve a phrase to topic IDs (use `id` as the search filter value, not `name`), or raise `offset` ' +
       'to page. Costs 1 credit per call regardless of page size.',
@@ -255,6 +257,52 @@ export function registerYoutubeTools(server: McpServer, apiKey: string) {
       const result = await callApi(apiKey, '/youtube/subtitles/meta', {
         method: 'GET',
         params: { videoId },
+      });
+      return formatToolResult(result);
+    },
+  );
+
+  server.tool(
+    'search_youtube_content',
+    'Search individual YouTube content (videos, shorts, streams) across CreatorDB\'s index. Different ' +
+      'from search_youtube (which searches CREATORS): this returns individual posts. Response: ' +
+      '`contentList[]` with contentId, contentType (video | shorts | stream), title, description, ' +
+      'thumbnail, url, publishTime (Unix ms), lengthSec, isSponsored, partneredBrands[], views, likes, ' +
+      'comments, engagementRate, hashtags, language, category and a nested creator block; plus ' +
+      'totalResults, hasNextPage, nextOffset and timeRange. Content filters: postType (video | shorts | ' +
+      'stream), title, description (the video description, not the title), hashtag, publishTime (days ' +
+      'ago), views, likes, comments, engagement, lengthSec, isSponsored, partneredBrands, language, ' +
+      'category, performanceViews, performanceEngagement. Creator filters: channelId (one channel\'s ' +
+      'content), creatorDisplayName, creatorBio, country, creatorLanguage, creatorCategory, contentTopics, ' +
+      'contentNiches, followers, avgEngagement, isVerified, audienceLocation, audienceAvgAge, ' +
+      'audienceMaleRatio, audienceFemaleRatio. Free-text (fuzzy) filters: title, description, hashtag, ' +
+      'creatorDisplayName, creatorBio. partneredBrands and creatorCategory ignore case. Engagement = ' +
+      '(likes + comments) / views. Typical prices, any content type (all creators / with followers > ' +
+      '100000): last 7 days 1 / 1, or 7 / 3 with a description filter; last 30 days 3 / 1, or 17 / 6 ' +
+      'with description; up to 90 days 5 / 2, or 32 / 11 with description. `postType` shorts only or ' +
+      'video/stream only costs less (e.g. 30-day description search on shorts: 5).' +
+      CONTENT_SEARCH_RULES,
+    {
+      ...contentSearchParams,
+      sortBy: z
+        .enum([
+          'publishTime',
+          'views',
+          'likes',
+          'comments',
+          'engagement',
+          'lengthSec',
+          'performanceViews',
+          'performanceEngagement',
+          'followers',
+        ])
+        .default('publishTime')
+        .describe('Sort field.'),
+    },
+    async (params) => {
+      const result = await callApi(apiKey, '/youtube/content-search', {
+        method: 'POST',
+        body: params,
       });
       return formatToolResult(result);
     },

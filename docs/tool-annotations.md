@@ -6,7 +6,7 @@ one is a common rejection reason.
 
 ## Summary
 
-- **45 tools total. 41 are read-only. 4 write.** None are destructive.
+- **47 tools total. 43 are read-only. 4 write.** None are destructive.
 - **Rule for the 41 read tools:** `readOnlyHint: true`, `openWorldHint: true`
   (they query live external social data — 30M+ creators, updated near-daily).
   Exception: `get_api_usage` reads only the caller's own account → `openWorldHint: false`.
@@ -34,6 +34,7 @@ The 4 write tools, called out explicitly for the reviewer:
   "search_instagram":               { "title": "Search Instagram Creators",            "readOnlyHint": true,  "openWorldHint": true },
   "search_instagram_content":       { "title": "Search Instagram Content",             "readOnlyHint": true,  "openWorldHint": true },
   "list_instagram_niches":          { "title": "List Instagram Niches",                "readOnlyHint": true,  "openWorldHint": true },
+  "list_instagram_topics":          { "title": "List Instagram Topics",                "readOnlyHint": true,  "openWorldHint": true },
 
   "get_tiktok_profile":             { "title": "Get TikTok Profile",                   "readOnlyHint": true,  "openWorldHint": true },
   "get_tiktok_contact":             { "title": "Get TikTok Contact Emails",            "readOnlyHint": true,  "openWorldHint": true },
@@ -44,6 +45,7 @@ The 4 write tools, called out explicitly for the reviewer:
   "search_tiktok":                  { "title": "Search TikTok Creators",               "readOnlyHint": true,  "openWorldHint": true },
   "search_tiktok_content":          { "title": "Search TikTok Content",                "readOnlyHint": true,  "openWorldHint": true },
   "list_tiktok_niches":             { "title": "List TikTok Niches",                   "readOnlyHint": true,  "openWorldHint": true },
+  "list_tiktok_topics":             { "title": "List TikTok Topics",                   "readOnlyHint": true,  "openWorldHint": true },
 
   "get_youtube_profile":            { "title": "Get YouTube Profile",                  "readOnlyHint": true,  "openWorldHint": true },
   "get_youtube_contact":            { "title": "Get YouTube Contact Emails",           "readOnlyHint": true,  "openWorldHint": true },
@@ -91,7 +93,7 @@ server.tool(
 );
 ```
 
-Apply to all 45 registrations in `src/tools/*.ts`. This ships in both surfaces (the stdio npm
+Apply to all 47 registrations in `src/tools/*.ts`. This ships in both surfaces (the stdio npm
 package and the remote `mcp.creatordb.app` connector, which reuses `registerAllTools`).
 
 ## Anthropic Connectors Directory — submission checklist
@@ -105,4 +107,4 @@ package and the remote `mcp.creatordb.app` connector, which reuses `registerAllT
 | Per-tool read-only / destructive annotations | ⬜ **this doc — needs wiring into `server.tool()` calls** |
 | Ownership verification (own the API/domain/resources) | ✅ we own creatordb.app + the API |
 
-**One to-do:** wire the annotations above into the 45 `server.tool()` calls, redeploy, then submit.
+**One to-do:** wire the annotations above into the 47 `server.tool()` calls, redeploy, then submit.

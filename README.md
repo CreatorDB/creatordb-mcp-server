@@ -2,13 +2,13 @@
 
 A [Model Context Protocol](https://modelcontextprotocol.io) server that exposes the [CreatorDB V3 API](https://apiv3.creatordb.app) to any MCP-compatible client (Claude Code, Claude Desktop, Cursor, etc.).
 
-**43 tools across six surfaces:**
+**47 tools across six surfaces:**
 
 - **Creator-side data** — profile, performance, audience demographics, contact, content-detail, performance history for YouTube, Instagram, and TikTok
 - **Creator search** — natural-language search across all three platforms, plus structured filter search per platform (country, language, follower thresholds, niches, hashtags, audience demographics, etc.)
 - **Brand-side / sponsor intelligence** *(YouTube + Instagram only — TikTok brand data is not indexed)* — search CreatorDB's 10K+ indexed brands, pull a brand's full profile, list every creator a brand has sponsored, get aggregated audience demographics across a brand's sponsored creator pool, and cross-platform spend / CPM / CPE rollups. The heavier sponsor reads (`get_sponsor_creators`, `get_sponsor_performance`, `get_sponsor_audience`, `get_sponsor_summary`) cost 15 credits each — use deliberately. `get_sponsor_information` is 2, `search_sponsors` 2, `list_sponsors` 1.
-- **Content search** — find individual TikTok videos by content-level filters (publish time window, view/like thresholds, hashtags, language, etc.). Different from creator search — this returns posts, not channels. *(YouTube and Instagram content search are temporarily unavailable while their search is optimized for lower credit consumption; TikTok remains.)*
-- **Topic + niche taxonomies** — paged, searchable catalogs (~470 YT topics, ~16K YT niches, ~40K each on IG/TT) for resolving the per-creator topic/niche IDs returned in profile responses. Pass `search` to resolve a phrase to entry IDs rather than paging; search filters take the `id`.
+- **Content search** — find individual posts (YouTube videos, shorts and streams; Instagram reels and posts; TikTok videos) by content-level filters (captions, hashtags, publish date, engagement thresholds, sponsorship) and creator-level filters, or within one creator's content. Different from creator search — this returns posts, not channels. Each call has a fixed price from a grid (time window, caption filter, follower floor, content type); with no window it searches the last 30 days.
+- **Topic + niche taxonomies** — paged, searchable catalogs (~490 topics per platform, ~16K YT niches, ~40K each on IG/TT) for resolving the per-creator topic/niche IDs returned in profile responses. Pass `search` to resolve a phrase to entry IDs rather than paging; search filters take the `id`.
 - **Account** — credit usage broken down by endpoint and platform.
 
 Every tool returns the underlying V3 JSON plus a `Credits used: N | Remaining: M` footer line, so the AI knows exactly what it's spending.
@@ -22,7 +22,7 @@ There are two ways to connect, depending on your client:
 - **Local clients** (Claude Code, Claude Desktop, Cursor) run the server as a subprocess via `npx` — see [Install (local / stdio)](#install-local--stdio).
 - **Web / desktop / mobile clients** connect to the hosted endpoint, or add CreatorDB straight from Claude's connector directory — see [Remote connector](#remote-connector-claude-web-desktop-mobile).
 
-Both expose the same 43 tools. Both need a CreatorDB V3 API key.
+Both expose the same 47 tools. Both need a CreatorDB V3 API key.
 
 1. **Prerequisites**
    - For the local route: Node.js 22 or newer (`node -v` to check)
@@ -118,7 +118,7 @@ https://mcp.creatordb.app/mcp
 
 Leave the Advanced OAuth Client ID / Secret fields empty — the server registers the client automatically.
 
-Either way, you'll be prompted to enter your CreatorDB API key when you connect, and the same 43 tools appear.
+Either way, you'll be prompted to enter your CreatorDB API key when you connect, and the same 47 tools appear.
 
 Notes:
 - You'll be prompted to enter your key when you connect; the connector seals it into an encrypted session token and keeps no separate copy. CreatorDB stores the key only as the credential it issued you.
@@ -198,7 +198,7 @@ The workflow validates that the tag matches `package.json` `version`, runs `npm 
 
 ## Tools
 
-43 tools across six categories. Every tool returns a structured JSON payload plus a `Credits used: N | Remaining: M` footer line.
+47 tools across six categories. Every tool returns a structured JSON payload plus a `Credits used: N | Remaining: M` footer line.
 
 ### Account (1)
 
@@ -248,7 +248,7 @@ Brand-key: `brandId`, typically the brand's primary domain (e.g. `"acer.com"`, `
 
 **Cost warning** — `get_sponsor_creators`, `get_sponsor_performance`, `get_sponsor_audience`, `get_sponsor_summary` each cost **25 credits** per call. Use `search_sponsors` / `list_sponsors` / `get_sponsor_information` for cheap exploration first.
 
-### YouTube creator data (7 + 4 platform-specific)
+### YouTube creator data (7 + 5 platform-specific)
 
 Creator-key: `channelId` (the UC… form — `@handle` / `/c/` / `/user/` URLs are not accepted; resolve first).
 
@@ -261,40 +261,44 @@ Creator-key: `channelId` (the UC… form — `@handle` / `/c/` / `/user/` URLs a
 | `get_youtube_audience` | 10 | Age buckets, gender split, top countries. |
 | `get_youtube_content_detail` | 3 | Recent videos + shorts with per-item engagement. |
 | `get_youtube_sponsorship` | 5 | Sponsored content grouped by indexed brand (recent posts only — empty list ≠ "no sponsors"). |
-| `list_youtube_topics` | 1 | The YT TOPIC taxonomy (~470 entries with channelCount), paged. **YouTube-only — IG and TT do not have a topic taxonomy.** `search`, `category`, `minChannelCount`, `pageSize`, `offset`. |
+| `search_youtube_content` | 1–97 (grid) | Search individual videos, shorts and streams (different from `search_youtube`, which searches creators). Last 30 days by default; `timeRange` for any window; `channelId` filter for one channel. 30-day search: 3, or 17 with a `description` filter; less with `postType` or `followers > 100000`. |
+| `list_youtube_topics` | 1 | The YT TOPIC taxonomy (~490 entries with channelCount), paged. Same taxonomy as `list_instagram_topics` / `list_tiktok_topics`, with YouTube IDs (`_youtube`). `search`, `category`, `minChannelCount`, `pageSize`, `offset`. |
 | `list_youtube_niches` | 1 | The YT NICHE taxonomy (~16K entries with channelCount), paged. `search`, `category`, `minChannelCount`, `pageSize`, `offset`. |
 | `get_youtube_subtitles_meta` | 1 | Per-video subtitle track listing. Takes `videoId` (not channelId). |
 | `get_youtube_subtitles_download` | 3 | Subtitle text for one video. Takes `videoId`, optional `language` (ISO 639-3). |
 
-### Instagram creator data (7 + 1)
+### Instagram creator data (7 + 3)
 
 Creator-key: `uniqueId` (the handle, no `@`).
 
 | Tool | Cost | Returns |
 | --- | --- | --- |
-| `get_instagram_profile` | 2 | Identity, followers, country, language, isBusinessAccount, linked socials, hashtags, account categories, plus the creator's `niches`. |
+| `get_instagram_profile` | 2 | Identity, followers, country, language, isBusinessAccount, linked socials, hashtags, account categories, plus the creator's `topics` and `niches`. |
 | `get_instagram_contact` | 15 | Email addresses. |
 | `get_instagram_performance` | 2 | First-page image + reels engagement; consistency scores. |
 | `get_instagram_performance_history` | 3 | Daily snapshots over the past N days. Takes `pastDayRange`. |
 | `get_instagram_audience` | 10 | Age buckets, gender split, top countries. |
 | `get_instagram_content_detail` | 2 | Recent images + reels with per-item engagement. |
 | `get_instagram_sponsorship` | 5 | Sponsored content grouped by indexed brand (recent posts only). |
-| `list_instagram_niches` | 1 | The IG NICHE taxonomy (~40K entries), paged. **Instagram does NOT have a "topics" taxonomy.** `search`, `minChannelCount`, `pageSize`, `offset`. |
+| `search_instagram_content` | 1–92 (grid) | Search individual reels and posts (different from `search_instagram`, which searches creators). Last 30 days by default; `timeRange` for any window; `uniqueId` filter for one creator. 30-day search: 4, or 17 with a `description` filter; less with `postType` or `followers > 100000`. |
+| `list_instagram_niches` | 1 | The IG NICHE taxonomy (~40K entries), paged. For topics, use `list_instagram_topics`. `search`, `minChannelCount`, `pageSize`, `offset`. |
+| `list_instagram_topics` | 1 | The IG TOPIC taxonomy (~490 entries with channelCount), paged. Same taxonomy as YouTube with Instagram IDs (`_instagram`) and counts. Profile `topics` may omit the suffix; search accepts both. `search`, `category`, `minChannelCount`, `pageSize`, `offset`. |
 
-### TikTok creator data (7 + 1)
+### TikTok creator data (7 + 2)
 
 Creator-key: `uniqueId` (the handle, no `@`).
 
 | Tool | Cost | Returns |
 | --- | --- | --- |
-| `get_tiktok_profile` | 2 | Identity, followers, country, language, hashtags, plus the creator's `niches`. |
+| `get_tiktok_profile` | 2 | Identity, followers, country, language, hashtags, plus the creator's `topics` and `niches`. |
 | `get_tiktok_contact` | 15 | Email addresses. |
 | `get_tiktok_performance` | 2 | Recent videos engagement (views, likes, comments, shares); consistency scores. |
 | `get_tiktok_performance_history` | 3 | Daily snapshots over the past N days. Takes `pastDayRange`. |
 | `get_tiktok_audience` | 10 | Age buckets, gender split, top countries. |
 | `get_tiktok_content_detail` | 2 | Recent videos with audio metadata, duet/stitch/commerce flags, per-item engagement. |
-| `search_tiktok_content` | 2 per page | Search individual VIDEOS by content-level filters (different from `search_tiktok`, which searches creators). NO isSponsored/partneredBrands (TT brand-attribution not implemented). Filter terminology uses `diggs` but response normalizes to `likes`. |
-| `list_tiktok_niches` | 1 | The TT NICHE taxonomy (~40K entries), paged. **TikTok does NOT have a topics taxonomy, and does NOT expose a per-brand sponsorship endpoint.** `search`, `minChannelCount`, `pageSize`, `offset`. |
+| `search_tiktok_content` | 1–28 (grid) | Search individual VIDEOS (different from `search_tiktok`, which searches creators). Last 30 days by default; `timeRange` for any window; `uniqueId` filter for one creator. 30-day search: 2, or 4 with a `description` filter. NO isSponsored/partneredBrands (TT brand-attribution not implemented). Filter terminology uses `diggs` but response normalizes to `likes`. |
+| `list_tiktok_niches` | 1 | The TT NICHE taxonomy (~40K entries), paged. For topics, use `list_tiktok_topics`. **TikTok does NOT expose a per-brand sponsorship endpoint.** `search`, `minChannelCount`, `pageSize`, `offset`. |
+| `list_tiktok_topics` | 1 | The TT TOPIC taxonomy (~490 entries with channelCount), paged. Same taxonomy as YouTube with TikTok IDs (`_tiktok`) and counts. `search`, `category`, `minChannelCount`, `pageSize`, `offset`. |
 
 ## Cross-platform differences cheat-sheet
 
@@ -302,10 +306,10 @@ Creator-key: `uniqueId` (the handle, no `@`).
 | --- | --- | --- | --- |
 | Creator parameter | `channelId` (UC…) | `uniqueId` (handle) | `uniqueId` (handle) |
 | Follower field | `totalSubscribers` | `totalFollowers` | `totalFollowers` |
-| Has a topic taxonomy | ✅ `list_youtube_topics` | ❌ | ❌ |
+| Has a topic taxonomy | ✅ `list_youtube_topics` | ✅ `list_instagram_topics` | ✅ `list_tiktok_topics` |
 | Has a niche taxonomy | ✅ `list_youtube_niches` | ✅ `list_instagram_niches` | ✅ `list_tiktok_niches` |
 | Per-creator niches in `/profile` | ✅ | ✅ | ✅ |
-| Per-creator topics in `/profile` | ✅ | ❌ | ❌ |
+| Per-creator topics in `/profile` | ✅ | ✅ | ✅ |
 | Sponsorship per-brand endpoint | ✅ | ✅ | ❌ |
 | Content types in `/content-detail` | videos + shorts | images + reels | videos |
 | `/content-detail` cost | 3 | 2 | 2 |
@@ -334,7 +338,7 @@ Shared across YT/IG/TT:
 - `country` — ISO 3166-1 alpha-3 (e.g. `"USA"`, `"JPN"`). On IG this value is derived from a content classifier rather than a self-declared field, and can occasionally be wrong for creators with multi-country presence — cross-check against `audienceLocations` and the creator's bio if accuracy matters.
 
 YT-only:
-- `topics: ["id_challenges_Comedy", …]` — coarse topic IDs (~470 universe). Resolve via `list_youtube_topics`.
+- `topics: ["id_challenges_Comedy", …]` — coarse topic IDs (~490 per platform). Resolve via `list_{youtube,instagram,tiktok}_topics`.
 - `totalViews` — lifetime channel views, as shown on the channel's About panel.
 - `joinedDate` — when the channel was created (Unix ms, day precision).
 - Sponsored video / shorts CPM and rate bands (`videoPrice`, `shortsPrice`) are no longer on profile; they're on `get_youtube_performance`.
@@ -471,8 +475,8 @@ src/
   tools/
     account.ts             # 1 tool
     search.ts              # 4 tools (NLS + 3 platform creator searches)
-    youtube.ts             # 12 tools
-    instagram.ts           # 9 tools
+    youtube.ts             # 13 tools (incl. search_youtube_content)
+    instagram.ts           # 10 tools (incl. search_instagram_content)
     tiktok.ts              # 9 tools (incl. search_tiktok_content)
     sponsors.ts            # 8 tools (brand-side sponsor intelligence)
   util/

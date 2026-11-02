@@ -13,9 +13,9 @@ const filterSchema = z.object({
         'alpha-3, e.g. "USA"), mainLanguage (ISO 639-3, e.g. "eng"), hashtags, niches, ' +
         'mainAudienceLocation, mainAudienceAge, mainAudienceGender, hasSponsors. ' +
         'Platform-specific count fields: YT uses totalSubscribers; IG/TT use totalFollowers. ' +
-        'YT-only: topics, isPodcast. Engagement fields exist on all three. `niches` and `topics` take ' +
+        'YT-only: isPodcast. `topics` exists on all three. Engagement fields exist on all three. `niches` and `topics` take ' +
         'taxonomy IDs (e.g. "id_canva_Education") from the `id` field of list_*_niches / ' +
-        'list_youtube_topics. A display name ("Canva") is converted to every ID with that exact ' +
+        'list_*_topics. A display name ("Canva") is converted to every ID with that exact ' +
         'name (first lookup per taxonomy costs 1 credit, then cached); a name with no exact match ' +
         'returns the closest IDs instead of searching.',
     ),
@@ -167,7 +167,7 @@ export function registerSearchTools(server: McpServer, apiKey: string) {
     'search_youtube',
     'Search YouTube creators using structured filters. Costs 1 credit per 10 filters (max 10). ' +
       'Use totalSubscribers (NOT totalFollowers) for count thresholds. YT-specific filterable ' +
-      'fields: `topics` (coarse ~400-theme taxonomy — IG/TT don\'t have it), `niches` (granular; ' +
+      'fields: `topics` (coarse ~490-theme taxonomy, IDs from list_youtube_topics), `niches` (granular; ' +
       'also on IG/TT but derived separately), `isPodcast` (boolean, `=` only, not sortable; AI-labelled ' +
       'podcast channels; unclassified channels match neither true nor false). Response: `creatorList`, `totalResults`, ' +
       '`hasNextPage`, `nextOffset` — pass nextOffset as the next request\'s offset to paginate. ' +
@@ -191,8 +191,8 @@ export function registerSearchTools(server: McpServer, apiKey: string) {
   server.tool(
     'search_instagram',
     'Search Instagram creators using structured filters. Costs 1 credit per 10 filters (max 10). ' +
-      'Use totalFollowers (NOT totalSubscribers) for count thresholds. IG has `niches` but NOT ' +
-      '`topics` (YouTube-only). Hashtag values match with or without a leading # and are ' +
+      'Use totalFollowers (NOT totalSubscribers) for count thresholds. IG has `niches` and `topics` ' +
+      '(topic IDs from list_instagram_topics). Hashtag values match with or without a leading # and are ' +
       'case-insensitive. Response: `creatorList`, `totalResults`, `hasNextPage`, `nextOffset`. ' +
       'Results are sorted by totalFollowers (descending) unless you pass your own `sortBy`.',
     searchBodySchema,
@@ -214,8 +214,8 @@ export function registerSearchTools(server: McpServer, apiKey: string) {
   server.tool(
     'search_tiktok',
     'Search TikTok creators using structured filters. Costs 1 credit per 10 filters (max 10). ' +
-      'Use totalFollowers (NOT totalSubscribers) for count thresholds. TT has `niches` but NOT ' +
-      '`topics` (YouTube-only). Hashtag values match with or without a leading # and are ' +
+      'Use totalFollowers (NOT totalSubscribers) for count thresholds. TT has `niches` and `topics` ' +
+      '(topic IDs from list_tiktok_topics). Hashtag values match with or without a leading # and are ' +
       'case-insensitive. Note: TikTok does not expose ' +
       'a per-brand sponsorship endpoint, so hasSponsors-style filtering is coarser than on YT/IG. ' +
       'Response: `creatorList`, `totalResults`, `hasNextPage`, `nextOffset`. ' +
