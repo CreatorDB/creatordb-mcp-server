@@ -11,7 +11,9 @@ export const CONTENT_SEARCH_RULES =
   'Pass `timeRange` {from, to} in Unix ms for any other window (`to` defaults to now); a `publishTime` ' +
   'filter still works and takes whole days ago (e.g. `publishTime < 7`). The searched window comes back ' +
   'as `data.timeRange` {from, to, isDefault}. ' +
-  'For a 7-day search, use `publishTime < 7` (or a `timeRange` of at most 7 days). FUZZY: `isFuzzySearch: true` matches a substring and is ' +
+  'For a 7-day search, use `publishTime < 7` (or a `timeRange` of at most 7 days). ' +
+  'COST TIPS: a `hashtag` filter is far cheaper than a `description` filter at every window length; ' +
+  'start with the 30-day default and widen only if it returns too few results. FUZZY: `isFuzzySearch: true` matches a substring and is ' +
   'allowed only on free-text filters (listed above); on any other field it returns a validation error. ' +
   '`in` with fuzzy matches content containing ANY of up to 10 values (e.g. several brand names in captions). ' +
   'Without fuzzy, `=` and `in` match the whole value. `totalResults` is approximate. ' +
