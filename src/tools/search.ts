@@ -33,8 +33,10 @@ const filterSchema = z.object({
         'For string ops (= / in on country, language, displayName, hashtags, niches) send a ' +
         'string or string array. Boolean ops take true/false. Hashtag values match with or ' +
         'without a leading # and are case-insensitive. Ratio and percentile fields ' +
-        '(audienceMaleRatio, audienceFemaleRatio, and YouTube\'s *Percentile fields) take a ' +
-        'decimal from 0 to 1, not 0-100: 0.6 = 60%, 0.9 = top 10%.',
+        '(audienceMaleRatio, audienceFemaleRatio, platformScore, and YouTube\'s *Percentile fields) ' +
+        'take a decimal from 0 to 1, not 0-100: 0.6 = 60%, 0.9 = top 10%. platformScore is the ' +
+        'creator\'s percentile among all creators on the platform (0.99 = top 1%), combining ' +
+        'audience size, reach, engagement and growth.',
     ),
   isFuzzySearch: z
     .boolean()
