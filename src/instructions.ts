@@ -4,7 +4,20 @@
  * several searches, then keep only those whose own content shows they fit. Shared by the stdio
  * entry and the hosted connector so both say the same thing.
  */
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { dirname, join } from 'node:path';
+
+/**
+ * The package version, read from this package's own package.json (one directory up from dist/),
+ * so the instructions always name the version that is actually running.
+ */
+export const SERVER_VERSION: string = JSON.parse(
+  readFileSync(join(dirname(fileURLToPath(import.meta.url)), '..', 'package.json'), 'utf8'),
+).version;
+
 export const SERVER_INSTRUCTIONS = [
+  `This is CreatorDB MCP server version ${SERVER_VERSION}. If the user asks which version they are using, give this number.`,
   'CreatorDB indexes YouTube, Instagram and TikTok creators. Notes for finding the right ones:',
   '- Find creators with search_youtube, search_instagram and search_tiktok. This is the default for every creator request, including plain-language ones: turn the request into filters yourself. Filters are exact and combined with AND.',
   '- Do not call search_creators_nls unless the user explicitly asks for natural-language search (NLS) by name. Not as a first step, not alongside structured searches, and not as a fallback when searches return few or no results: it converts a sentence into filters in one pass and never checks the results, so they are often loose. When structured searches come up short, broaden or change the filters instead.',
