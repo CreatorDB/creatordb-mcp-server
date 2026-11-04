@@ -6,6 +6,7 @@ import { dirname, join } from 'node:path';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { registerAllTools, SERVER_INSTRUCTIONS } from './register-tools.js';
+import { checkForUpdate, oneTimeNotice } from './util/client-id.js';
 
 const apiKey = process.env.CREATORDB_API_KEY;
 if (!apiKey) {
@@ -26,7 +27,11 @@ const server = new McpServer(
   { instructions: SERVER_INSTRUCTIONS },
 );
 
-registerAllTools(server, apiKey);
+// Look up the latest published version in the background; a newer one is mentioned once, on the
+// first tool result after the lookup finishes. Opt out with CREATORDB_MCP_NO_UPDATE_CHECK=1.
+const notice = oneTimeNotice(checkForUpdate(version));
+
+registerAllTools(server, apiKey, { transport: 'stdio', notice });
 
 // Connect via stdio transport
 const transport = new StdioServerTransport();

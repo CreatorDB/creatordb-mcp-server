@@ -4,6 +4,7 @@ import { callApi, callSseApi } from '../util/api-client.js';
 import { formatToolResult } from '../util/response.js';
 import { compactSearchEnrichment } from '../util/compact.js';
 import { apiTaxonomyLoader, resolveTaxonomyFilters, taxonomyIdError } from '../util/taxonomy-ids.js';
+import type { ApiAuth } from '../util/client-id.js';
 
 const filterSchema = z.object({
   filterName: z
@@ -136,7 +137,7 @@ function withNotes<T extends { content: Array<{ type: 'text'; text: string }> }>
   return { ...result, content: [...result.content, ...notes.map((text) => ({ type: 'text' as const, text }))] };
 }
 
-export function registerSearchTools(server: McpServer, apiKey: string) {
+export function registerSearchTools(server: McpServer, apiKey: ApiAuth) {
   // Natural Language Search
   server.tool(
     'search_creators_nls',

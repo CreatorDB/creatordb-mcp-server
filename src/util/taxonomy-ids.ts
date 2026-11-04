@@ -10,6 +10,7 @@
  */
 import { callApi } from './api-client.js';
 import { paginateTaxonomy, type TaxonomyItem } from './taxonomy.js';
+import type { ApiAuth } from './client-id.js';
 
 export const TAXONOMY_ID_PREFIX = 'id_';
 const CACHE_TTL_MS = 6 * 60 * 60 * 1000;
@@ -59,7 +60,7 @@ function matchName(items: TaxonomyItem[], value: string): TaxonomyItem[] {
 /** Taxonomies are the same for every caller and change slowly, so one copy per process is shared. */
 const cache = new Map<string, { at: number; items: TaxonomyItem[] }>();
 
-export function apiTaxonomyLoader(apiKey: string): TaxonomyLoader {
+export function apiTaxonomyLoader(apiKey: ApiAuth): TaxonomyLoader {
   return async (path) => {
     const hit = cache.get(path);
     if (hit && Date.now() - hit.at < CACHE_TTL_MS) return { items: hit.items, creditsUsed: 0 };

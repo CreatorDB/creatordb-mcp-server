@@ -127,6 +127,12 @@ Notes:
 - Hosted as a Firebase Cloud Function (gen 2) in `asia-northeast1`; source is in [`functions/`](./functions).
 - Don't have a key? Get one at <https://app.creatordb.app> or email hello@creatordb.app.
 
+## Updates and identification
+
+When run locally, the server checks the npm registry once at startup. If a newer version is published, the first tool result after the check mentions it; restart your client with `@creatordbai/mcp-server@latest` to update. The check is skipped when offline. To turn it off, set `CREATORDB_MCP_NO_UPDATE_CHECK=1` in the server's environment.
+
+Requests to the CreatorDB API carry a `User-Agent` naming the server version, how it runs (`stdio` locally, `hosted` for the remote connector) and the MCP client's name and version, for example `creatordb-mcp/1.13.0 (stdio; client=claude-ai/0.1.0)`. Nothing else about your setup is sent.
+
 ## Changing your API key
 
 You don't update a key inside the MCP server — it doesn't store keys. You change it in your client's MCP configuration and restart.

@@ -4,6 +4,7 @@ import { BASE_URL, callApi } from '../util/api-client.js';
 import { formatToolResult } from '../util/response.js';
 import { taxonomyParams, runTaxonomyTool } from '../util/taxonomy-tool.js';
 import { CONTENT_SEARCH_RULES, contentSearchParams } from './content-search.js';
+import { authHeaders, type ApiAuth } from '../util/client-id.js';
 
 const channelLookupParam = {
   channelId: z
@@ -70,7 +71,7 @@ const sponsorshipFields = {
     .describe("Fractional Calls — pass { sponsorList: N } to cap the sponsoring brands returned, billed 0.5 per brand, capped at 5 (~10 brands). Example: { sponsorList: 5 } = 2.5. Omit for the full list (5)."),
 };
 
-export function registerYoutubeTools(server: McpServer, apiKey: string) {
+export function registerYoutubeTools(server: McpServer, apiKey: ApiAuth) {
   server.tool(
     'get_youtube_profile',
     'Get a YouTube creator\'s profile: display name, subscriber count, lifetime channel views ' +
@@ -334,7 +335,7 @@ export function registerYoutubeTools(server: McpServer, apiKey: string) {
       url.searchParams.set('vssId', vssId);
       const res = await fetch(url, {
         method: 'GET',
-        headers: { 'api-key': apiKey, 'Content-Type': 'application/json' },
+        headers: { ...authHeaders(apiKey), 'Content-Type': 'application/json' },
       });
       const body: unknown = await res.json();
 

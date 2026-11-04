@@ -6,6 +6,7 @@ import { z } from 'zod';
 import { callApi } from './api-client.js';
 import { formatToolResult } from './response.js';
 import { paginateTaxonomy, type TaxonomyItem } from './taxonomy.js';
+import type { ApiAuth } from './client-id.js';
 
 export const DEFAULT_PAGE_SIZE = 100;
 export const MAX_PAGE_SIZE = 1000;
@@ -57,7 +58,7 @@ export interface TaxonomyArgs {
 }
 
 /** Fetch a taxonomy from V3, then filter/rank/slice before it reaches the client. */
-export async function runTaxonomyTool(apiKey: string, path: string, args: TaxonomyArgs) {
+export async function runTaxonomyTool(apiKey: ApiAuth, path: string, args: TaxonomyArgs) {
   const result = await callApi(apiKey, path, { method: 'GET' });
   if (!result.success) return formatToolResult(result);
 
