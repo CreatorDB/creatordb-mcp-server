@@ -101,7 +101,7 @@ export const CREDIT_COST_ROWS: CreditCostRow[] = [
     group: 'Creator profile & analytics',
     tool: 'get_{youtube,instagram,tiktok}_performance_history',
     cost: '3–5',
-    notes: 'GET. Scales with day range: 3 for ≤7 days, rising to 5 at the full 365-day range.',
+    notes: 'GET. Scales with day range: 3 for ≤7 days, rising to 5 from 181 days up to the 400-day maximum.',
   },
   {
     group: 'Creator profile & analytics',
