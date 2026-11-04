@@ -44,6 +44,15 @@ const filterSchema = z.object({
     .describe('Enable fuzzy matching for string fields (e.g. displayName).'),
 });
 
+/**
+ * Day range for performance-history enrichment. The search API takes it as a JSON number, so a
+ * numeric string ("90") is accepted for convenience and converted.
+ */
+export const pastDayRangeSchema = z
+  .union([z.number().int().min(1).max(365), z.string().regex(/^\d+$/)])
+  .transform((v) => Number(v))
+  .pipe(z.number().int().min(1).max(365));
+
 const searchBodySchema = {
   filters: z
     .array(filterSchema)
@@ -78,7 +87,7 @@ const searchBodySchema = {
       audience: z.array(z.string()).optional(),
       contact: z.array(z.string()).optional(),
       'content-detail': z.record(z.string(), z.number().int().min(0)).optional(),
-      'performance-history': z.object({ pastDayRange: z.string() }).optional(),
+      'performance-history': z.object({ pastDayRange: pastDayRangeSchema }).optional(),
       sponsorship: z.record(z.string(), z.number().int().min(0)).optional(),
     })
     .optional()
@@ -89,7 +98,7 @@ const searchBodySchema = {
         'audience/contact take field-name arrays; content-detail takes per-item counts ' +
         '(YouTube recentVideos/recentShorts, Instagram recentImages/recentReels, TikTok ' +
         'recentVideos; 0.1 credit per item); sponsorship takes { sponsorList: n } (YouTube and ' +
-        'Instagram only); performance-history takes { pastDayRange: "90" }. An empty array or ' +
+        'Instagram only); performance-history takes { pastDayRange: 90 } (days, 1-365). An empty array or ' +
         'object requests the full bundle at the endpoint\'s full price. Useful for checking fit ' +
         'without a profile call per creator, e.g. { "profile": ["bio", "niches", "country", ' +
         '"mainLanguage"], "content-detail": { "recentVideos": 3 } } = 0.7 credits per result. In search ' +
