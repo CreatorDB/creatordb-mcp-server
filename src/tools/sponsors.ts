@@ -2,6 +2,7 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { callApi } from '../util/api-client.js';
 import { formatToolResult } from '../util/response.js';
+import type { ApiAuth } from '../util/client-id.js';
 
 // A brandId is CreatorDB's identifier for a brand — its primary domain, NOT a
 // brand name. Agents that pass a name ("Nike") instead of an id ("nike.com")
@@ -40,7 +41,7 @@ const platformParam = z
   .enum(['youtube', 'instagram'])
   .describe('Platform scope. NOTE: TikTok sponsor data is not available — only YouTube and Instagram.');
 
-export function registerSponsorTools(server: McpServer, apiKey: string) {
+export function registerSponsorTools(server: McpServer, apiKey: ApiAuth) {
   server.tool(
     'search_sponsors',
     'Search the CreatorDB brand index using structured filters. Returns lean brand records ' +

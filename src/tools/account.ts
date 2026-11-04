@@ -2,8 +2,9 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { callApi } from '../util/api-client.js';
 import { formatToolResult } from '../util/response.js';
+import type { ApiAuth } from '../util/client-id.js';
 
-export function registerAccountTools(server: McpServer, apiKey: string) {
+export function registerAccountTools(server: McpServer, apiKey: ApiAuth) {
   server.tool(
     'get_api_usage',
     'Get your CreatorDB API usage. Returns `records: [{ date (YYYYMMDD), requestCount, ' +

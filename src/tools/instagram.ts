@@ -5,6 +5,7 @@ import { formatToolResult } from '../util/response.js';
 import { normalizeHandle } from '../util/handle.js';
 import { taxonomyParams, runTaxonomyTool } from '../util/taxonomy-tool.js';
 import { CONTENT_SEARCH_RULES, contentSearchParams } from './content-search.js';
+import type { ApiAuth } from '../util/client-id.js';
 
 const uniqueIdParam = {
   uniqueId: z
@@ -49,7 +50,7 @@ const sponsorshipFields = {
     .describe("Fractional Calls — pass { sponsorList: N } to cap the sponsoring brands returned, billed 0.5 per brand, capped at 5 (~10 brands). Example: { sponsorList: 5 } = 2.5. Omit for the full list (5)."),
 };
 
-export function registerInstagramTools(server: McpServer, apiKey: string) {
+export function registerInstagramTools(server: McpServer, apiKey: ApiAuth) {
   server.tool(
     'get_instagram_profile',
     'Get an Instagram creator\'s profile: display name, follower count, biography, ' +

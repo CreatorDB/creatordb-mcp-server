@@ -5,6 +5,7 @@ import { formatToolResult } from '../util/response.js';
 import { normalizeHandle } from '../util/handle.js';
 import { taxonomyParams, runTaxonomyTool } from '../util/taxonomy-tool.js';
 import { CONTENT_SEARCH_RULES, contentSearchParams } from './content-search.js';
+import type { ApiAuth } from '../util/client-id.js';
 
 const uniqueIdParam = {
   uniqueId: z
@@ -43,7 +44,7 @@ const contentDetailFields = {
     .describe("Fractional Calls — an OBJECT mapping content type to the number of items to return, billed 0.1 per item, capped at 3 (~30 items). Keys: recentVideos. Example: { recentVideos: 5 } = 0.5. Omit for the full recent set (3)."),
 };
 
-export function registerTiktokTools(server: McpServer, apiKey: string) {
+export function registerTiktokTools(server: McpServer, apiKey: ApiAuth) {
   server.tool(
     'get_tiktok_profile',
     'Get a TikTok creator\'s profile: display name, follower count, biography, isVerified flag, ' +

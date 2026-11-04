@@ -1,3 +1,5 @@
+import { authHeaders, type ApiAuth } from './client-id.js';
+
 export const BASE_URL = process.env.CREATORDB_API_BASE || 'https://apiv3.creatordb.app';
 
 export interface ApiResponse {
@@ -16,7 +18,7 @@ export interface ApiResponse {
 }
 
 async function doFetch(
-  apiKey: string,
+  apiKey: ApiAuth,
   path: string,
   options: {
     method: 'GET' | 'POST';
@@ -34,7 +36,7 @@ async function doFetch(
   return fetch(url, {
     method: options.method,
     headers: {
-      'api-key': apiKey,
+      ...authHeaders(apiKey),
       'Content-Type': 'application/json',
     },
     body: options.body ? JSON.stringify(options.body) : undefined,
@@ -42,7 +44,7 @@ async function doFetch(
 }
 
 export async function callApi(
-  apiKey: string,
+  apiKey: ApiAuth,
   path: string,
   options: {
     method: 'GET' | 'POST';
@@ -59,7 +61,7 @@ export async function callApi(
  * one that parses as JSON (the final result event).
  */
 export async function callSseApi(
-  apiKey: string,
+  apiKey: ApiAuth,
   path: string,
   options: {
     method: 'GET' | 'POST';
