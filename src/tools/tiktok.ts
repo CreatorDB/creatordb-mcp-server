@@ -98,12 +98,12 @@ export function registerTiktokTools(server: McpServer, apiKey: string) {
     'get_tiktok_performance_history',
     'Get daily metric snapshots (followers, content count, recent engagement) for a TikTok ' +
       'creator. Returns the `histories` array of timestamped snapshots over the past N days. ' +
-      'Costs 3–5 credits depending on the requested day range (3 for up to 7 days, rising to 5 for a full 365-day range).',
+      'Costs 3–5 credits depending on the requested day range (3 for up to 7 days, rising to 5 for 181–400 days).',
     {
       ...uniqueIdParam,
       pastDayRange: z
         .string()
-        .describe('How many past days of daily snapshots to return. String integer, 1–365.'),
+        .describe('How many past days of daily snapshots to return. String integer, 1–400.'),
     },
     async ({ uniqueId, pastDayRange }) => {
       const result = await callApi(apiKey, '/tiktok/performance-history', {

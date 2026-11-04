@@ -135,12 +135,12 @@ export function registerYoutubeTools(server: McpServer, apiKey: string) {
     'get_youtube_performance_history',
     'Get daily metric snapshots (subscribers, total content count, all-time performance) for a ' +
       'YouTube creator. Returns the `histories` array of timestamped snapshots over the past N ' +
-      'days. Costs 3–5 credits depending on the requested day range (3 for up to 7 days, rising to 5 for a full 365-day range).',
+      'days. Costs 3–5 credits depending on the requested day range (3 for up to 7 days, rising to 5 for 181–400 days).',
     {
       ...channelLookupParam,
       pastDayRange: z
         .string()
-        .describe('How many past days of daily snapshots to return. String integer, 1–365.'),
+        .describe('How many past days of daily snapshots to return. String integer, 1–400.'),
     },
     async ({ channelId, uniqueId, pastDayRange }) => {
       const result = await callApi(apiKey, '/youtube/performance-history', {
