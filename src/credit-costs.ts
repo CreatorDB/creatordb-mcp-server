@@ -58,6 +58,12 @@ export const CREDIT_COST_ROWS: CreditCostRow[] = [
   },
   {
     group: 'Creator search',
+    tool: 'vet_creators',
+    cost: '~13–17 per creator found',
+    notes: 'One enriched search per platform (profile, performance, audience, 3 recent posts, and sponsors on YouTube/Instagram), billed per creator returned: about 13 on Instagram and TikTok, 17 on YouTube. Creators that are not found are not charged.',
+  },
+  {
+    group: 'Creator search',
     tool: 'search_creators_nls',
     cost: 'dynamic (~1–10)',
     notes: 'Natural-language search; token-based, so cost scales with the query.',
