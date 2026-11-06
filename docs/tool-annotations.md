@@ -6,7 +6,7 @@ one is a common rejection reason.
 
 ## Summary
 
-- **47 tools total. 43 are read-only. 4 write.** None are destructive.
+- **48 tools total. 44 are read-only. 4 write.** None are destructive.
 - **Rule for the 41 read tools:** `readOnlyHint: true`, `openWorldHint: true`
   (they query live external social data — 30M+ creators, updated near-daily).
   Exception: `get_api_usage` reads only the caller's own account → `openWorldHint: false`.
@@ -32,6 +32,7 @@ The 4 write tools, called out explicitly for the reviewer:
   "get_instagram_content_detail":   { "title": "Get Instagram Content Detail",         "readOnlyHint": true,  "openWorldHint": true },
   "get_instagram_sponsorship":      { "title": "Get Instagram Sponsorships",           "readOnlyHint": true,  "openWorldHint": true },
   "search_instagram":               { "title": "Search Instagram Creators",            "readOnlyHint": true,  "openWorldHint": true },
+  "vet_creators":                   { "title": "Vet Creators in Bulk",                 "readOnlyHint": true,  "openWorldHint": true },
   "search_instagram_content":       { "title": "Search Instagram Content",             "readOnlyHint": true,  "openWorldHint": true },
   "list_instagram_niches":          { "title": "List Instagram Niches",                "readOnlyHint": true,  "openWorldHint": true },
   "list_instagram_topics":          { "title": "List Instagram Topics",                "readOnlyHint": true,  "openWorldHint": true },

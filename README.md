@@ -2,13 +2,14 @@
 
 A [Model Context Protocol](https://modelcontextprotocol.io) server that exposes the [CreatorDB V3 API](https://apiv3.creatordb.app) to any MCP-compatible client (Claude Code, Claude Desktop, Cursor, etc.).
 
-**47 tools across six surfaces:**
+**48 tools across seven surfaces:**
 
 - **Creator-side data** — profile, performance, audience demographics, contact, content-detail, performance history for YouTube, Instagram, and TikTok
 - **Creator search** — natural-language search across all three platforms, plus structured filter search per platform (country, language, follower thresholds, niches, hashtags, audience demographics, etc.)
 - **Brand-side / sponsor intelligence** *(YouTube + Instagram only — TikTok brand data is not indexed)* — search CreatorDB's 10K+ indexed brands, pull a brand's full profile, list every creator a brand has sponsored, get aggregated audience demographics across a brand's sponsored creator pool, and cross-platform spend / CPM / CPE rollups. The heavier sponsor reads (`get_sponsor_creators`, `get_sponsor_performance`, `get_sponsor_audience`, `get_sponsor_summary`) cost 15 credits each — use deliberately. `get_sponsor_information` is 2, `search_sponsors` 2, `list_sponsors` 1.
 - **Content search** — find individual posts (YouTube videos, shorts and streams; Instagram reels and posts; TikTok videos) by content-level filters (captions, hashtags, publish date, engagement thresholds, sponsorship) and creator-level filters, or within one creator's content. Different from creator search — this returns posts, not channels. Each call has a fixed price from a grid (time window, caption filter, follower floor, content type); with no window it searches the last 30 days.
 - **Topic + niche taxonomies** — paged, searchable catalogs (~490 topics per platform, ~16K YT niches, ~40K each on IG/TT) for resolving the per-creator topic/niche IDs returned in profile responses. Pass `search` to resolve a phrase to entry IDs rather than paging; search filters take the `id`.
+- **Bulk vetting** — `vet_creators` returns engagement, audience and sponsor details for up to 150 creators in one call.
 - **Account** — credit usage broken down by endpoint and platform.
 
 Every tool returns the underlying V3 JSON plus a `Credits used: N | Remaining: M` footer line, so the AI knows exactly what it's spending.
@@ -22,7 +23,7 @@ There are two ways to connect, depending on your client:
 - **Local clients** (Claude Code, Claude Desktop, Cursor) run the server as a subprocess via `npx` — see [Install (local / stdio)](#install-local--stdio).
 - **Web / desktop / mobile clients** connect to the hosted endpoint, or add CreatorDB straight from Claude's connector directory — see [Remote connector](#remote-connector-claude-web-desktop-mobile).
 
-Both expose the same 47 tools. Both need a CreatorDB V3 API key.
+Both expose the same 48 tools. Both need a CreatorDB V3 API key.
 
 1. **Prerequisites**
    - For the local route: Node.js 22 or newer (`node -v` to check)
@@ -118,7 +119,7 @@ https://mcp.creatordb.app/mcp
 
 Leave the Advanced OAuth Client ID / Secret fields empty — the server registers the client automatically.
 
-Either way, you'll be prompted to enter your CreatorDB API key when you connect, and the same 47 tools appear.
+Either way, you'll be prompted to enter your CreatorDB API key when you connect, and the same 48 tools appear.
 
 Notes:
 - You'll be prompted to enter your key when you connect; the connector seals it into an encrypted session token and keeps no separate copy. CreatorDB stores the key only as the credential it issued you.
@@ -198,7 +199,7 @@ The workflow validates that the tag matches `package.json` `version`, runs `npm 
 
 ## Tools
 
-47 tools across six categories. Every tool returns a structured JSON payload plus a `Credits used: N | Remaining: M` footer line.
+48 tools across six categories. Every tool returns a structured JSON payload plus a `Credits used: N | Remaining: M` footer line.
 
 ### Account (1)
 
@@ -206,7 +207,7 @@ The workflow validates that the tag matches `package.json` `version`, runs `npm 
 | --- | --- | --- |
 | `get_api_usage` | 0 | Daily request counts and credit consumption by endpoint. Defaults to last 7 days; takes optional `start`/`end` Unix-ms timestamps. |
 
-### Search (4)
+### Search (5)
 
 | Tool | Cost | Notes |
 | --- | --- | --- |
@@ -214,6 +215,7 @@ The workflow validates that the tag matches `package.json` `version`, runs `npm 
 | `search_youtube` | 1 per 10 filters | Structured filter search. Use `totalSubscribers` for count thresholds. |
 | `search_instagram` | 1 per 10 filters | Structured filter search. Use `totalFollowers` for count thresholds. |
 | `search_tiktok` | 1 per 10 filters | Structured filter search. Use `totalFollowers` for count thresholds. |
+| `vet_creators` | ~13–17 per creator found | Check up to 150 creators (any mix of platforms) in one call: followers, country, language, bio, recent posts, engagement, median views or likes, posting frequency, audience countries / gender / age, and recent sponsors (YouTube and Instagram). Replaces per-creator profile, performance, audience and sponsorship calls when shortlisting. |
 
 **Filter type gotcha:** numeric ops (`>`, `<`, `=` on subscriber/follower/rate fields) require a **number** value, not a numeric string. `"1000000"` → `VALIDATION_ERROR`; `1000000` → ok.
 
@@ -223,7 +225,7 @@ The workflow validates that the tag matches `package.json` `version`, runs `npm 
 
 **Empty results:** a search with no matches returns a note on how to widen it.
 
-**Server instructions:** the server sends instructions at connect time describing how the data works (exact filters, taxonomy IDs, country-level location) and the search method that returns the most relevant creators: gather candidates with several searches that use different topic signals and sort orders, enrich them with `fields`, then keep only creators whose own content shows they fit. A thorough search this way typically uses 50-150 credits. Agents state their plan before searching, share a preview of clear fits when early results allow, and take a quick path (one or two searches) when the user asks for speed. Clients connected before an update see new instructions after reconnecting.
+**Server instructions:** the server sends instructions at connect time describing how the data works (exact filters, taxonomy IDs, country-level location) and the search method that returns the most relevant creators: gather candidates with several searches that use different topic signals and sort orders, enrich them with `fields`, then keep only creators whose own content shows they fit. A thorough search this way typically uses 50-150 credits. Agents state their plan before searching, share a preview of clear fits when early results allow, make independent calls together in the same turn, list only clear fits, stop once they have the number of creators the user asked for, and check shortlisted creators with one `vet_creators` call instead of per-creator lookups. When the user asks for speed they take a quick path: map niches for every platform in one turn, run two searches per platform together, keep the clear fits. Clients connected before an update see new instructions after reconnecting.
 
 **Result size:** enriched search results are shortened in steps to stay within what MCP clients show to the model (long descriptions and bios first, then top-10 hashtag and niche lists, then recent posts reduced to their essentials). The result says what was shortened; `get_*_profile` and `get_*_content_detail` return full text. Tool results are compact JSON.
 

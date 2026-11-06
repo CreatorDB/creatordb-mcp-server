@@ -69,6 +69,7 @@ export const TOOL_ANNOTATIONS: Record<string, ToolAnnotations> = {
   get_youtube_subtitles_meta: read('Get YouTube Subtitle Metadata'),
   get_youtube_subtitles_download: read('Download YouTube Subtitles'),
   search_youtube: read('Search YouTube Creators'),
+  vet_creators: read('Vet Creators in Bulk'),
   search_youtube_content: read('Search YouTube Content'),
   list_youtube_niches: read('List YouTube Niches'),
   list_youtube_topics: read('List YouTube Topics'),
