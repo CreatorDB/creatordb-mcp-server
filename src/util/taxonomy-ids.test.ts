@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { resolveTaxonomyFilters, type Filter, type TaxonomyLoader } from './taxonomy-ids.js';
+import { completeContentTopicFilters, resolveTaxonomyFilters, type Filter, type TaxonomyLoader } from './taxonomy-ids.js';
 import type { TaxonomyItem } from './taxonomy.js';
 
 const YT: TaxonomyItem[] = [
@@ -91,4 +91,36 @@ test('accepts the Name/Category form the list tools display', async () => {
   const r = await resolveTaxonomyFilters('youtube', [{ filterName: 'niches', op: 'in', value: ['Canva/Howto Style'] }], loader());
   assert.ok(r.ok);
   assert.deepEqual(r.filters[0]!.value, ['id_canva_HowtoStyle']);
+});
+
+test('completes topic IDs that lack the platform ending, and notes it', async () => {
+  const calls: string[] = [];
+  const r = await resolveTaxonomyFilters(
+    'instagram',
+    [{ filterName: 'topics', op: 'in', value: ['id_space_ScienceTechnology', 'id_beauty_HowtoStyle_instagram', 'id_vlog_UniversalTopics_youtube'] }],
+    loader(calls),
+  );
+  assert.ok(r.ok);
+  assert.deepEqual(r.filters[0]!.value, [
+    'id_space_ScienceTechnology_instagram',
+    'id_beauty_HowtoStyle_instagram',
+    'id_vlog_UniversalTopics_instagram',
+  ]);
+  assert.match(r.notes.join('\n'), /"id_space_ScienceTechnology" → id_space_ScienceTechnology_instagram/);
+  assert.deepEqual(calls, []);
+});
+
+test('leaves niche IDs as they are', async () => {
+  const r = await resolveTaxonomyFilters('tiktok', [{ filterName: 'niches', op: '=', value: 'id_love_All' }], loader());
+  assert.ok(r.ok);
+  assert.equal(r.filters[0]!.value, 'id_love_All');
+});
+
+test('completes contentTopics IDs in content search filters', () => {
+  const out = completeContentTopicFilters('tiktok', [
+    { filterName: 'contentTopics', op: 'in', value: ['id_beauty_HowtoStyle', 'id_fashion_HowtoStyle_tiktok'] },
+    { filterName: 'hashtag', op: '=', value: '#id_x' },
+  ]);
+  assert.deepEqual(out[0]!.value, ['id_beauty_HowtoStyle_tiktok', 'id_fashion_HowtoStyle_tiktok']);
+  assert.equal(out[1]!.value, '#id_x');
 });

@@ -5,6 +5,7 @@ import { formatToolResult } from '../util/response.js';
 import { normalizeHandle } from '../util/handle.js';
 import { taxonomyParams, runTaxonomyTool } from '../util/taxonomy-tool.js';
 import { CONTENT_SEARCH_RULES, contentSearchParams } from './content-search.js';
+import { completeContentTopicFilters } from '../util/taxonomy-ids.js';
 
 const uniqueIdParam = {
   uniqueId: z
@@ -118,9 +119,9 @@ export function registerTiktokTools(server: McpServer, apiKey: string) {
     'get_tiktok_audience',
     'Get a TikTok creator\'s audience demographics: `audienceLocations` (top 6 countries with ' +
       'shares), `audienceGender` (maleRatio + femaleRatio, binary only), `audienceAvgAge` (integer), ' +
-      '`audienceAgeBreakdown` (fixed 7 buckets: 13-17/18-24/25-34/35-44/45-54/55-64/65+). When ' +
-      'data is missing the endpoint returns the placeholder shape (all 0.0) — treat male+female=0 ' +
-      'as missing. Costs 10 credits.',
+      '`audienceAgeBreakdown` (fixed 7 buckets: 13-17/18-24/25-34/35-44/45-54/55-64/65+). Each block ' +
+      'is null when that creator has no data for it (some accounts have audience countries only); ' +
+      'a null is missing data, not zero. Costs 10 credits.',
     { ...uniqueIdParam, ...audienceFields },
     async ({ uniqueId, fields }) => {
       const result = await callApi(apiKey, '/tiktok/audience', {
@@ -187,7 +188,7 @@ export function registerTiktokTools(server: McpServer, apiKey: string) {
     async (params) => {
       const result = await callApi(apiKey, '/tiktok/content-search', {
         method: 'POST',
-        body: params,
+        body: { ...params, filters: completeContentTopicFilters('tiktok', params.filters) },
       });
       return formatToolResult(result);
     },
@@ -215,15 +216,15 @@ export function registerTiktokTools(server: McpServer, apiKey: string) {
     'list_tiktok_topics',
     'Browse or search the TikTok TOPIC taxonomy used by CreatorDB (~490 entries) with ' +
       'channelCount per topic. It is the same coarse classification as list_youtube_topics (e.g. ' +
-      '"Beauty", "Fashion", "Fitness") across 16 categories, with TikTok-specific IDs ending in ' +
+      '"Beauty", "Fashion", "Workout & Exercise") across 16 categories, with TikTok-specific IDs ending in ' +
       '`_tiktok` and TikTok creator counts. Use these IDs (not the YouTube ones) for the `topics` filter ' +
       'on search_tiktok. To see which topics a specific creator is classified under, use ' +
       'get_tiktok_profile and read the `topics` field. Returns one page at a time, largest ' +
       'topics first — pass `search` to resolve a phrase to topic IDs (use `id` as the search filter ' +
       'value, not `name`), or raise `offset` to page. Costs 1 credit per call regardless of page size.',
     taxonomyParams(
-      'Restrict to one of the 16 topic categories (e.g. "Howto & Style", "Gaming"). ' +
-        'Matched case-insensitively.',
+      'Restrict to one of the 16 topic categories (e.g. "Howto Style", "Gaming"). ' +
+        'Matched ignoring case, spaces and punctuation.',
     ),
     async (args) => runTaxonomyTool(apiKey, '/tiktok/topics', args),
   );

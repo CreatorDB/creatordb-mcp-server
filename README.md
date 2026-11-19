@@ -284,7 +284,7 @@ Creator-key: `uniqueId` (the handle, no `@`).
 | `get_instagram_sponsorship` | 5 | Sponsored content grouped by indexed brand (recent posts only). |
 | `search_instagram_content` | 1–92 (grid) | Search individual reels and posts (different from `search_instagram`, which searches creators). Last 30 days by default; `timeRange` for any window; `uniqueId` filter for one creator. 30-day search: 4, or 17 with a `description` filter; less with `postType` or `followers > 100000`. |
 | `list_instagram_niches` | 1 | The IG NICHE taxonomy (~40K entries), paged. For topics, use `list_instagram_topics`. `search`, `minChannelCount`, `pageSize`, `offset`. |
-| `list_instagram_topics` | 1 | The IG TOPIC taxonomy (~490 entries with channelCount), paged. Same taxonomy as YouTube with Instagram IDs (`_instagram`) and counts. Profile `topics` may omit the suffix; search accepts both. `search`, `category`, `minChannelCount`, `pageSize`, `offset`. |
+| `list_instagram_topics` | 1 | The IG TOPIC taxonomy (~490 entries with channelCount), paged. Same taxonomy as YouTube with Instagram IDs (`_instagram`) and counts. Search matches only the suffixed form; an ID without it is completed by the server. `search`, `category`, `minChannelCount`, `pageSize`, `offset`. |
 
 ### TikTok creator data (7 + 2)
 
@@ -362,7 +362,7 @@ Identical shape across platforms:
 - `audienceLocations: [{ country, share }]` — top 6 countries with shares summing to roughly 1.0.
 - `audienceGender: { maleRatio, femaleRatio }` — sums to ~1.0; binary split only.
 - `audienceAvgAge` — integer.
-- `audienceAgeBreakdown: [{ ageRange, share }]` — fixed buckets `13-17 | 18-24 | 25-34 | 35-44 | 45-54 | 55-64 | 65+`. Always 7 entries; placeholder rows are all-zero (see footgun list below).
+- `audienceAgeBreakdown: [{ ageRange, share }]` — fixed buckets `13-17 | 18-24 | 25-34 | 35-44 | 45-54 | 55-64 | 65+`. Always 7 entries when present; null when there is no age data (see footgun list below).
 
 ### `/performance`
 
@@ -416,7 +416,7 @@ NLS response:
 
 ## Common footguns
 
-- **Placeholder demographics**: when CreatorDB doesn't have real audience data, `/audience` returns the all-zero shape (`audienceGender: { maleRatio: 0, femaleRatio: 0 }`, age buckets all 0.0). Treat any row where male+female=0 as missing, not as "no gender data."
+- **Missing demographics are null**: when CreatorDB has no data for an audience group, `/audience` returns `audienceGender`, `audienceAvgAge` and `audienceAgeBreakdown` as null, each on its own (some accounts have audience countries only). Treat null as missing, never as zero.
 - **Empty `sponsorList` ≠ no sponsors** (see above).
 - **`relatedCreators` is unranked** — order is not significance. Don't slice the first N and call them "top related"; sample or rerank by your own metric.
 - **Freshness lag** — `lastDbUpdateTime` is when CreatorDB last refreshed. If it's older than ~14 days, the profile may not reflect recent breakout content.

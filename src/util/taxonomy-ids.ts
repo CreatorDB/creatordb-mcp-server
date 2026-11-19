@@ -34,6 +34,30 @@ export type Resolution =
 
 const isTaxonomyField = (name: string): name is TaxonomyField => name === 'niches' || name === 'topics';
 const normalize = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, '');
+const PLATFORM_SUFFIX = /_(youtube|instagram|tiktok)$/;
+
+/**
+ * Topic IDs end in the platform (`id_beauty_HowtoStyle_instagram`), and V3 matches only that form:
+ * an ID without the ending, or with another platform's, returns no creators rather than an error.
+ * Older profile responses and agent memory still carry the bare form, so it is completed here.
+ */
+export function completeTopicId(platform: Platform, id: string): string {
+  const want = `_${platform}`;
+  if (!id.startsWith(TAXONOMY_ID_PREFIX) || id.endsWith(want)) return id;
+  return id.replace(PLATFORM_SUFFIX, '') + want;
+}
+
+/** Content search's `contentTopics` filter takes the same topic IDs. */
+export function completeContentTopicFilters<T extends { filterName: string; value: unknown }>(
+  platform: Platform,
+  filters: T[],
+): T[] {
+  return filters.map((f) => {
+    if (f.filterName !== 'contentTopics') return f;
+    const fix = (v: unknown) => (typeof v === 'string' ? completeTopicId(platform, v) : v);
+    return { ...f, value: Array.isArray(f.value) ? f.value.map(fix) : fix(f.value) };
+  });
+}
 
 export function taxonomyPath(platform: Platform, field: TaxonomyField): string {
   return `/${platform}/${field}`;
@@ -87,13 +111,20 @@ export async function resolveTaxonomyFilters(
       out.push(f);
       continue;
     }
+    const field = f.filterName;
+    const fixId = (id: string): string => {
+      if (field !== 'topics') return id;
+      const fixed = completeTopicId(platform, id);
+      if (fixed !== id) notes.push(`topics "${id}" → ${fixed}`);
+      return fixed;
+    };
     const values = (Array.isArray(f.value) ? f.value : [f.value]).map(String);
     if (values.every((v) => v.startsWith(TAXONOMY_ID_PREFIX))) {
-      out.push(f);
+      const fixed = values.map(fixId);
+      out.push({ ...f, value: Array.isArray(f.value) ? fixed : fixed[0]! });
       continue;
     }
 
-    const field = f.filterName;
     const loaded = await load(taxonomyPath(platform, field));
     if (!loaded) {
       problems.push(
@@ -107,7 +138,7 @@ export async function resolveTaxonomyFilters(
     const ids: string[] = [];
     for (const v of values) {
       if (v.startsWith(TAXONOMY_ID_PREFIX)) {
-        ids.push(v);
+        ids.push(fixId(v));
         continue;
       }
       const matches = matchName(loaded.items, v);

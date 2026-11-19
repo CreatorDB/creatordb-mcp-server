@@ -5,6 +5,7 @@ import { formatToolResult } from '../util/response.js';
 import { normalizeHandle } from '../util/handle.js';
 import { taxonomyParams, runTaxonomyTool } from '../util/taxonomy-tool.js';
 import { CONTENT_SEARCH_RULES, contentSearchParams } from './content-search.js';
+import { completeContentTopicFilters } from '../util/taxonomy-ids.js';
 
 const uniqueIdParam = {
   uniqueId: z
@@ -127,9 +128,9 @@ export function registerInstagramTools(server: McpServer, apiKey: string) {
     'get_instagram_audience',
     'Get an Instagram creator\'s audience demographics: `audienceLocations` (top 6 countries with ' +
       'shares), `audienceGender` (maleRatio + femaleRatio, binary only), `audienceAvgAge` (integer), ' +
-      '`audienceAgeBreakdown` (fixed 7 buckets: 13-17/18-24/25-34/35-44/45-54/55-64/65+). When ' +
-      'data is missing the endpoint returns the placeholder shape (all 0.0) — treat male+female=0 ' +
-      'as missing, not "no gender data." Costs 10 credits.',
+      '`audienceAgeBreakdown` (fixed 7 buckets: 13-17/18-24/25-34/35-44/45-54/55-64/65+). Each block ' +
+      'is null when that creator has no data for it (some accounts have audience countries only); ' +
+      'a null is missing data, not zero. Costs 10 credits.',
     { ...uniqueIdParam, ...audienceFields },
     async ({ uniqueId, fields }) => {
       const result = await callApi(apiKey, '/instagram/audience', {
@@ -187,7 +188,7 @@ export function registerInstagramTools(server: McpServer, apiKey: string) {
       '`contentList[]` with contentId, contentType (reel | slideshow | video), description, thumbnail, url, ' +
       'publishTime (Unix ms), lengthSec (reels and videos only; null when unknown, absent on slideshows), ' +
       'isSponsored, partneredBrands[], likes, comments, engagementRate, hashtags and a nested creator block; ' +
-      'plus totalResults, hasNextPage, nextOffset and timeRange. No views. Content filters: postType (reel | ' +
+      'plus totalResults, hasNextPage, nextOffset and timeRange. isSponsored is true for a paid partnership or a post our classifier judged sponsored. No views. Content filters: postType (reel | ' +
       'slideshow | video), description (the caption), hashtag (with "#"), publishTime (days ago), likes, ' +
       'comments, engagement, isSponsored, partneredBrands, performanceLikes, performanceEngagement. Creator ' +
       'filters: uniqueId (one creator\'s posts), creatorDisplayName, creatorBio, country, creatorLanguage, ' +
@@ -217,7 +218,7 @@ export function registerInstagramTools(server: McpServer, apiKey: string) {
     async (params) => {
       const result = await callApi(apiKey, '/instagram/content-search', {
         method: 'POST',
-        body: params,
+        body: { ...params, filters: completeContentTopicFilters('instagram', params.filters) },
       });
       return formatToolResult(result);
     },
@@ -243,15 +244,15 @@ export function registerInstagramTools(server: McpServer, apiKey: string) {
     'list_instagram_topics',
     'Browse or search the Instagram TOPIC taxonomy used by CreatorDB (~490 entries) with ' +
       'channelCount per topic. It is the same coarse classification as list_youtube_topics (e.g. ' +
-      '"Beauty", "Fashion", "Fitness") across 16 categories, with Instagram-specific IDs ending in ' +
+      '"Beauty", "Fashion", "Workout & Exercise") across 16 categories, with Instagram-specific IDs ending in ' +
       '`_instagram` and Instagram creator counts. Use these IDs (not the YouTube ones) for the `topics` filter ' +
       'on search_instagram. To see which topics a specific creator is classified under, use ' +
-      'get_instagram_profile and read the `topics` field. Profile `topics` may list IDs without the `_instagram` suffix; search accepts both forms. Returns one page at a time, largest ' +
+      'get_instagram_profile and read the `topics` field. Returns one page at a time, largest ' +
       'topics first — pass `search` to resolve a phrase to topic IDs (use `id` as the search filter ' +
       'value, not `name`), or raise `offset` to page. Costs 1 credit per call regardless of page size.',
     taxonomyParams(
-      'Restrict to one of the 16 topic categories (e.g. "Howto & Style", "Gaming"). ' +
-        'Matched case-insensitively.',
+      'Restrict to one of the 16 topic categories (e.g. "Howto Style", "Gaming"). ' +
+        'Matched ignoring case, spaces and punctuation.',
     ),
     async (args) => runTaxonomyTool(apiKey, '/instagram/topics', args),
   );
