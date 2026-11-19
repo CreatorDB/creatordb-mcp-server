@@ -83,6 +83,8 @@ const STEM_MAP: Record<string, string> = {
   baker: 'bake', bakers: 'bake', baking: 'bake',
   dancer: 'dance', dancers: 'dance', dancing: 'dance',
   singer: 'sing', singers: 'sing', singing: 'sing',
+  // The topic taxonomy has no "Fitness" entry; it is "Workout & Exercise".
+  fitness: 'workout', workouts: 'workout',
   // Nationality adjective → country, so "Japanese food" reaches "JapanFood".
   japanese: 'japan', korean: 'korea', chinese: 'china', taiwanese: 'taiwan',
   vietnamese: 'vietnam', spanish: 'spain', french: 'france', german: 'germany',
@@ -137,8 +139,14 @@ export function paginateTaxonomy(all: TaxonomyItem[], q: TaxonomyQuery): Taxonom
   let items = all;
 
   if (q.category) {
-    const wanted = q.category.toLowerCase();
-    items = items.filter((i) => (i.category ?? '').toLowerCase() === wanted);
+    // Category names have changed form ("Howto & Style" became "Howto Style"; the ID segment
+    // is "HowtoStyle", and "Auto Vehicles" is "AutosVehicles" in IDs), so compare letters and
+    // digits only, against both the category name and the category segment of the ID.
+    const wanted = q.category.toLowerCase().replace(/[^a-z0-9]/g, '');
+    const idCategory = (id = '') => (id.replace(/_(youtube|instagram|tiktok)$/, '').split('_').pop() ?? '').toLowerCase();
+    items = items.filter(
+      (i) => (i.category ?? '').toLowerCase().replace(/[^a-z0-9]/g, '') === wanted || idCategory(i.id) === wanted,
+    );
   }
 
   if (typeof q.minChannelCount === 'number') {

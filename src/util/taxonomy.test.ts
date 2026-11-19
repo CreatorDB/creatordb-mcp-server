@@ -90,3 +90,25 @@ test('short tokens and platform names are ignored as query terms', () => {
   assert.deepEqual(tokenize('tiktok tok'), ['tok']);
   assert.equal(scoreName(new Set(['tok']), 'Tok'), 100);
 });
+
+test('category matches ignoring spaces and punctuation, and the ID category segment', () => {
+  const topics: TaxonomyItem[] = [
+    { id: 'id_beauty_HowtoStyle_instagram', name: 'Beauty', category: 'Howto Style', channelCount: 10 },
+    { id: 'id_sportscars_AutosVehicles_instagram', name: 'Sports Cars', category: 'Auto Vehicles', channelCount: 5 },
+  ];
+  const cat = (category: string) =>
+    paginateTaxonomy(topics, { pageSize: 10, offset: 0, category }).items.map((i) => i.id);
+  assert.deepEqual(cat('Howto & Style'), ['id_beauty_HowtoStyle_instagram']);
+  assert.deepEqual(cat('howtostyle'), ['id_beauty_HowtoStyle_instagram']);
+  assert.deepEqual(cat('Autos & Vehicles'), ['id_sportscars_AutosVehicles_instagram']);
+  assert.deepEqual(cat('Auto Vehicles'), ['id_sportscars_AutosVehicles_instagram']);
+});
+
+test('"fitness" finds the Workout & Exercise topic', () => {
+  const topics: TaxonomyItem[] = [
+    { id: 'id_workoutexercise_Sports_instagram', name: 'Workout & Exercise', category: 'Sports', channelCount: 10 },
+    { id: 'id_beauty_HowtoStyle_instagram', name: 'Beauty', category: 'Howto Style', channelCount: 20 },
+  ];
+  const r = paginateTaxonomy(topics, { pageSize: 10, offset: 0, search: 'fitness' });
+  assert.deepEqual(r.items.map((i) => i.id), ['id_workoutexercise_Sports_instagram']);
+});

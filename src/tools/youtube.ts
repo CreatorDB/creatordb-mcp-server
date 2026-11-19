@@ -4,6 +4,7 @@ import { BASE_URL, callApi } from '../util/api-client.js';
 import { formatToolResult } from '../util/response.js';
 import { taxonomyParams, runTaxonomyTool } from '../util/taxonomy-tool.js';
 import { CONTENT_SEARCH_RULES, contentSearchParams } from './content-search.js';
+import { completeContentTopicFilters } from '../util/taxonomy-ids.js';
 
 const channelLookupParam = {
   channelId: z
@@ -155,9 +156,9 @@ export function registerYoutubeTools(server: McpServer, apiKey: string) {
     'get_youtube_audience',
     'Get a YouTube creator\'s audience demographics: `audienceLocations` (top 6 countries with ' +
       'shares), `audienceGender` (maleRatio + femaleRatio, binary only), `audienceAvgAge` (integer), ' +
-      '`audienceAgeBreakdown` (fixed 7 buckets: 13-17/18-24/25-34/35-44/45-54/55-64/65+). When ' +
-      'data is missing the endpoint returns the placeholder shape (all 0.0) — treat male+female=0 ' +
-      'as missing. Costs 10 credits.',
+      '`audienceAgeBreakdown` (fixed 7 buckets: 13-17/18-24/25-34/35-44/45-54/55-64/65+). Each block ' +
+      'is null when that creator has no data for it (some accounts have audience countries only); ' +
+      'a null is missing data, not zero. Costs 10 credits.',
     { ...channelLookupParam, ...audienceFields },
     async ({ channelId, uniqueId, fields }) => {
       const result = await callApi(apiKey, '/youtube/audience', {
@@ -219,7 +220,7 @@ export function registerYoutubeTools(server: McpServer, apiKey: string) {
       'to page. Costs 1 credit per call regardless of page size.',
     taxonomyParams(
       'Restrict to one of the 16 YouTube categories (e.g. "Gaming", "Music", "Education"). ' +
-        'Matched case-insensitively.',
+        'Matched ignoring case, spaces and punctuation.',
     ),
     async (args) => runTaxonomyTool(apiKey, '/youtube/topics', args),
   );
@@ -302,7 +303,7 @@ export function registerYoutubeTools(server: McpServer, apiKey: string) {
     async (params) => {
       const result = await callApi(apiKey, '/youtube/content-search', {
         method: 'POST',
-        body: params,
+        body: { ...params, filters: completeContentTopicFilters('youtube', params.filters) },
       });
       return formatToolResult(result);
     },
