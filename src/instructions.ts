@@ -3,6 +3,10 @@
  * the search method that returns the most relevant creators: gather candidates broadly with
  * several searches, then keep only those whose own content shows they fit. Shared by the stdio
  * entry and the hosted connector so both say the same thing.
+ *
+ * Some clients show a model only the first 4,096 characters of server instructions, so the text
+ * stays under INSTRUCTIONS_MAX_LENGTH. Guidance that belongs to one tool goes in that tool's
+ * description.
  */
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -16,31 +20,25 @@ export const SERVER_VERSION: string = JSON.parse(
   readFileSync(join(dirname(fileURLToPath(import.meta.url)), '..', 'package.json'), 'utf8'),
 ).version;
 
+/** Longest instructions text that every client passes to the model in full. */
+export const INSTRUCTIONS_MAX_LENGTH = 4096;
+
 export const SERVER_INSTRUCTIONS = [
   `This is CreatorDB MCP server version ${SERVER_VERSION}. If the user asks which version they are using, give this number.`,
-  'CreatorDB indexes YouTube, Instagram and TikTok creators. Notes for finding the right ones:',
-  '- Find creators with search_youtube, search_instagram and search_tiktok. This is the default for every creator request, including plain-language ones: turn the request into filters yourself. Filters are exact and combined with AND.',
-  '- Do not call search_creators_nls unless the user explicitly asks for natural-language search (NLS) by name. Not as a first step, not alongside structured searches, and not as a fallback when searches return few or no results: it converts a sentence into filters in one pass and never checks the results, so they are often loose. When structured searches come up short, broaden or change the filters instead.',
-  '- Apply only the requirements the user stated. Do not add a country, language, follower or engagement threshold the user did not ask for; if you assume one, say so.',
-  '- Topic signals: `niches` and `topics` (all platforms) are AI classifications and take IDs from list_*_niches / list_*_topics (display names are converted automatically). `hashtags` match exact tags a creator used. No single signal captures a topic well, so one narrow search misses good creators.',
+  'CreatorDB indexes YouTube, Instagram and TikTok creators.',
+  '- Find creators with search_youtube, search_instagram and search_tiktok: turn the request into filters yourself (filters are exact and combined with AND). Use search_creators_nls only when the user asks for natural-language search (NLS) by name, never as a first step or a fallback. When searches come up short, broaden or change the filters.',
+  '- Apply only the requirements the user stated. Do not add a country, language, follower or engagement threshold of your own; if you assume one, say so.',
+  '- Topic signals: `niches` and `topics` are AI classifications and take IDs from list_*_niches / list_*_topics. `hashtags` match exact tags a creator used. No single signal captures a topic well, so one narrow search misses good creators.',
   '- Location is country-level (ISO 3166-1 alpha-3, e.g. "USA"). There is no state or city data; tell the user instead of approximating it.',
-  '- Past work with a brand ("has worked with X", "uses X"): first run a creator search with the brand\'s own hashtags (e.g. #brandname or #brandnamepartner) in `hashtags`; it covers each creator\'s stored hashtag history, including older posts, at the normal search price. Then, if you need more, use content search on those hashtags.',
-  '- Content search (search_*_content) finds individual posts and costs more than creator search. Start with the default 30-day window and a `hashtag` filter, which is the cheapest. Use a `description` (caption text) filter only when there is no hashtag to search, and keep it to 30 days. Widen the window (up to 365 days) only when 30 days returns too few results, and widen it on hashtag searches, not caption searches.',
+  '- Past work with a brand ("has worked with X"): first run a creator search with the brand\'s own hashtags (e.g. #brandname or #brandnamepartner) in `hashtags`. Then, if you need more, use content search (search_*_content) on those hashtags, starting with the default 30-day window.',
   'Search method: cast a wide net, then filter.',
-  '1. Gather candidates with at least four searches (pageSize 30 each), each using a different signal for the topic: one whose `niches` filter lists many related niche IDs at once (an "in" filter matches any of them; include close variants and related niches, not just the literal term), one with related hashtags, and on YouTube one with topics.',
-  '2. Do not let follower count decide who you see: sort at least one search by engagement rate and one by recent growth, not only by followers. If the request gives a size range, split it into 2-3 follower bands and search each band.',
+  '1. Tell the user your plan in one line and that a thorough search takes about 1-2 minutes.',
+  '2. Run at least four searches (pageSize 30) together in one turn, each on a different signal for the topic: a `niches` "in" filter listing many related niche IDs (close variants too), related hashtags, and on YouTube topics. Sort one by engagement rate and one by recent growth, not only by followers. Split a stated size range into 2-3 follower bands and search each.',
   '3. Pass `fields` on these searches so each result shows what the creator actually posts, e.g. {"profile":["bio","niches","country","mainLanguage"],"content-detail":{"recentVideos":3}} (Instagram: recentReels or recentImages).',
-  '4. Pool the results, drop duplicates, and keep only creators whose bio or recent content clearly shows the topic and who meet every stated requirement. Prefer creators that several searches found. If too few remain, search again with other terms.',
-  'Keeping the user informed:',
-  '- Before searching, tell the user your plan in one line and that a thorough search takes about 1-2 minutes.',
-  '- Early results: as soon as your first one or two enriched searches are back (about 30 seconds in), share a preview of up to 5 creators that clearly fit so far, labelled as a preview, and say you are still checking more. Then continue the method and give the final list. A user who only needs a few can stop at the preview.',
-  '- If the user asks for results quickly ("quick", "fast", "just a few", "right away"), use the quick method, in this order. 1) Map the topic: in ONE turn, call list_<platform>_niches with a search term for every requested platform at once, and pick every related niche ID (close variants too). 2) Search: in ONE turn, run two searches per platform together, pageSize 30, each with `fields` {"profile":["bio","country"],"content-detail":{"recentVideos":3}} (Instagram: recentReels): one whose `niches` "in" filter lists all the IDs from step 1, and one with related hashtags sorted by engagement rate. 3) Keep only creators whose own bio or recent posts clearly show the topic and who meet every stated requirement. Search again only if fewer than 3 clear fits per platform remain, and then only one more round with different hashtags. Say it was a quick pass and offer the thorough search.',
-  '- If the user asks for a number of creators, aim for that many clear fits and stop searching once you have them.',
-  '- Details on many creators (engagement, views, posting frequency, audience countries/gender/age, sponsors): call vet_creators ONCE with every shortlisted creator, not get_*_profile / get_*_performance / get_*_audience / get_*_sponsorship per creator. Use it also to check requirements the search cards do not show (audience share, engagement), before you finalise the list.',
-  '- List only clear fits. Do not pad the list with partial fits; say how many clear fits you found and what limited it.',
-  '- Make independent calls together in the same turn (for example the same search on each platform, or several searches in one step), not one after another.',
-  '- If the user asks for results partway through, share the best candidates found so far and say which have been checked.',
-  '- When you present creators (in previews and in the final list), give each one\'s platform, display name, @handle and a direct profile link so the user can look them up: Instagram https://www.instagram.com/<handle>, TikTok https://www.tiktok.com/@<handle>, YouTube https://www.youtube.com/@<handle> (or https://www.youtube.com/channel/<channelId> when there is no handle). Handles may come back with a leading @; never double it. Add the follower or subscriber count and one line on why they fit.',
-  '- When you answer, say what you searched for, any assumptions you made, and which parts of the request the data cannot check.',
-  '- Every tool description states its credit cost. `fields` enrichment is billed per result returned (about 0.7 credits per result for the example above), so a thorough search typically uses 50-150 credits.',
+  '4. When the first results are back, share a preview of up to 5 creators that clearly fit, labelled as a preview, and say you are still checking more.',
+  '5. Pool the results, drop duplicates, and keep only creators whose bio or recent content clearly shows the topic and who meet every stated requirement. Prefer creators that several searches found. To check what search results do not show (audience, engagement, sponsors), call vet_creators ONCE with the whole shortlist, not get_* tools per creator.',
+  '6. List only clear fits; do not pad the list. If the user asked for a number of creators, stop once you have that many. Say how many clear fits you found and what limited it. If too few remain, search again with other terms.',
+  'Quick requests ("quick", "fast", "just a few"): in one turn call list_<platform>_niches for every requested platform; in the next turn run two searches per platform with `fields` (one on all related niche IDs, one on related hashtags sorted by engagement rate); keep the clear fits. Search one more round only if fewer than 3 per platform remain. Say it was a quick pass and offer the thorough search.',
+  'Presenting creators: give platform, display name, @handle, a profile link (Instagram https://www.instagram.com/<handle>, TikTok https://www.tiktok.com/@<handle>, YouTube https://www.youtube.com/@<handle>, or https://www.youtube.com/channel/<channelId> when there is no handle), the follower or subscriber count and one line on why they fit. Handles may come back with a leading @; never double it. Say what you searched for, any assumptions you made, and which parts of the request the data cannot check.',
+  'Credits: every tool description states its cost. `fields` enrichment is billed per result returned (about 0.7 credits per result for the example above), so a thorough search typically uses 50-150 credits.',
 ].join('\n');
